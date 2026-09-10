@@ -204,3 +204,14 @@ Bu case tek servis olarak teslim edildi. Gerçek kurulumda değişecekler:
   metriğe dönmesi. Uygulama tarafı hazır; eksik olan altyapı.
 
 Bunları şimdi eklemek teslim edilen dilimi karmaşıklaştırırdı; sınırı burada çizdim.
+
+## Bilinen sınır
+
+**Yarıda kalan aktarım "0 satır" gibi görünür.** `import_batches` kaydında durum alanı yok;
+parti oluşturulduktan sonra işlem hata alırsa geride sayıları sıfır olan bir kayıt kalır ve
+aktarım geçmişinde başarısız olduğu değil, hiç satır işlemediği izlenimini verir.
+
+En olası sebep olan "kapalı döneme aktarım" ön kontrolle çözüldü — o durumda parti hiç
+oluşturulmuyor. Ama disk hatası ya da bozuk kodlama gibi beklenmedik bir hata aynı izi
+bırakabilir. Kalıcı çözüm partiye `Status` (Running / Completed / Failed) ve hata mesajı
+alanı eklemek; aktarım geçmişi o zaman başarısız denemeleri de gerekçesiyle gösterir.
