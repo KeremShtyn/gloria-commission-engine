@@ -80,14 +80,14 @@ değerden hangi değere çevirdi bilgisini JSON olarak yazar. Servis katmanında
 kod yolu eklendiğinde loglama unutulabilirdi.
 
 **Dönem kilidi.** Hesabı biten dönem kapatılır; kapalı dönemin satış ve prim kayıtları
-değiştirilemez. Kontrol yine interceptor'da — hangi endpoint'ten gelinirse gelinsin geçerli.
+değiştirilemez. Kontrol yine interceptor'da — hangi servisten gelinirse gelinsin geçerli.
 Dönemi yeniden açmak Admin yetkisi ister ve denetim kaydına düşer.
 
 **Kural silinmez, pasife alınır.** Geçmiş hesap adımları kurala referans veriyor;
 fiziksel silme izlenebilirliği bozar.
 
 **Roller.** Admin kuralları yönetir, Muhasebe tüm personeli görür, Personel yalnızca kendisini.
-Yetki kontrolü servis katmanında; endpoint'e güvenilmez. Şu an rol HTTP header'ından okunuyor,
+Yetki kontrolü servis katmanında; controller'a güvenilmez. Şu an rol HTTP header'ından okunuyor,
 üretimde bu sınıf JWT claim'lerini okuyan bir implementasyonla değiştirilir — çağıran kod aynı kalır.
 
 **Para birimi.** Yabancı para satışlar TRY'ye çevrilerek saklanır, kullanılan kur satırda tutulur.
@@ -123,7 +123,8 @@ o çağrının içindeki interceptor'larda çalıştığı için, hangi serviste
 
 Bu case tek servis olarak teslim edildi. Gerçek kurulumda değişecekler:
 
-- **Veritabanı:** SQLite yerine SQL Server. Şema ve indeksler aynı; EF Core sağlayıcısı değişir.
+- **Veritabanı:** SQLite yerine SQL Server. Entity'ler, EF konfigürasyonları ve indeksler
+  olduğu gibi taşınır; migration'lar sağlayıcıya özgü olduğu için yeniden üretilir.
 - **Aktarım:** Import endpoint'i senkron. Dosyalar büyüdüğünde kuyruğa alınıp arka planda
   işlenmesi, ilerleme bilgisinin `import_batches` üzerinden okunması gerekir.
 - **Zamanlama:** Gecelik ETL'i tetikleyecek bir job (Hangfire veya harici scheduler).

@@ -106,8 +106,8 @@ Ayrıntısı [docs/adr](docs/adr) altında, özeti:
   Yeni kural eklemek bir veritabanı satırı; yeni bir *tip* eklemek yeni bir strateji sınıfı.
 - **Tarihte katı, tutarda toleranslı ayrıştırma.** `32/08/2026` reddedilir — yanlış tahmin primi
   yanlış aya yazar. `2.500,00` kabul edilir — belirsizlik yok, reddetmek gerçek ciroyu kaybettirir.
-- **Denetim kaydı `SaveChanges` içinde.** Servis katmanında değil; hangi yoldan gelinirse gelinsin
-  kural ve satış değişiklikleri loglanır.
+- **Denetim kaydı ve dönem kilidi `SaveChanges` içinde.** Servis katmanında değil; hangi yoldan
+  gelinirse gelinsin kural ve satış değişiklikleri loglanır, kapalı dönem korunur.
 
 ## Yapı
 
