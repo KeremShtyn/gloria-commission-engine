@@ -1,0 +1,6 @@
+@Gloria.Commission.Api_HostAddress = http://localhost:5195
+
+GET {{Gloria.Commission.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
