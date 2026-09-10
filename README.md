@@ -119,10 +119,19 @@ HTTPS zorunluluğu ve login rate limit ayrıca ele alınmalıdır.
 
 ## Ekranlar
 
-**Prim kuralları** — kural tanımlama ve düzenleme. Boş bırakılan eşleştirme alanı "hepsi" demektir.
+Yedi sayfa, rol bazlı menü. Personel rolü yalnızca kendi primini görür.
 
-**Prim detayı** — personelin dönem primi ve hesabın her adımı. Prim dışı kalan satışlar da
-nedeniyle birlikte listelenir; hiçbir kayıt sessizce düşmez.
+| Sayfa | İçerik |
+|---|---|
+| Genel bakış | Dönemin prim toplamı, ERP mutabakatı, veri kalitesi, son aktarımlar |
+| Primim | Personelin dönem primi ve hesabın her adımı |
+| Dönem özeti | Tüm personelin primi, satırdan detaya geçiş |
+| Prim kuralları | Kural listesi; ekleme ve düzenleme modal içinde |
+| Veri aktarımı | Yükleme, aktarım geçmişi, hatalı ve ham satırlar |
+| Dönemler | Dönem kapatma ve yeniden açma |
+| Denetim | Değişiklik geçmişi, eski/yeni değer karşılaştırması |
+
+Prim dışı kalan satışlar da nedeniyle birlikte listelenir; hiçbir kayıt sessizce düşmez.
 
 ## Öne çıkan kararlar
 

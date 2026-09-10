@@ -1,41 +1,42 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api, formatMoney, formatPercent, type Session } from '../api/client'
+import { useSearchParams } from 'react-router-dom'
+import { api } from '../api/client'
+import { PeriodPicker } from '../components/PeriodPicker'
+import { EXCLUSION_REASON_LABEL } from '../constants'
+import { useSession } from '../context/SessionContext'
 import type { CommissionResultResponse } from '../types'
+import { formatMoney, formatPercent } from '../utils/formatters'
 
-const REASON_LABEL: Record<string, string> = {
-  NO_MATCHING_RULE: 'Kural tanımlı değil',
-  OUTSIDE_EMPLOYMENT: 'İstihdam dışı',
-  NOT_COMMISSIONABLE: 'Prime esas değil',
-  REVERSED_PAIR: 'İade ile netleşti',
-}
+export function MyCommissionPage() {
+  const { session, canSeeAllEmployees } = useSession()
+  const [params] = useSearchParams()
 
-export function CommissionPage({ session }: { session: Session }) {
-  const [year, setYear] = useState(2026)
-  const [month, setMonth] = useState(8)
-  const [employeeNo, setEmployeeNo] = useState(session.employeeNo ?? 'P1001')
+  const [year, setYear] = useState(Number(params.get('year')) || 2026)
+  const [month, setMonth] = useState(Number(params.get('month')) || 8)
+  const [employeeNo, setEmployeeNo] = useState(
+    params.get('employeeNo') ?? session.employeeNo ?? 'P1001',
+  )
+
   const [result, setResult] = useState<CommissionResultResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   // Personel rolunde baska bir personel sorgulanamaz; kutu kendi numarasina sabitlenir.
-  const locked = session.role === 'EmployeeResponse'
-
-  useEffect(() => {
-    if (locked && session.employeeNo) setEmployeeNo(session.employeeNo)
-  }, [locked, session.employeeNo])
+  const locked = !canSeeAllEmployees
+  const target = locked ? (session.employeeNo ?? employeeNo) : employeeNo
 
   const load = useCallback(async () => {
     setBusy(true)
     setError(null)
     try {
-      setResult(await api.commission(session, year, month, employeeNo))
+      setResult(await api.commission(session, year, month, target))
     } catch (e) {
       setResult(null)
       setError((e as Error).message)
     } finally {
       setBusy(false)
     }
-  }, [session, year, month, employeeNo])
+  }, [session, year, month, target])
 
   useEffect(() => {
     void load()
@@ -43,74 +44,62 @@ export function CommissionPage({ session }: { session: Session }) {
 
   return (
     <>
+      <div className="page-head">
+        <h1>{locked ? 'Primim' : 'Personel primi'}</h1>
+        <p>Hesap; hangi satış, hangi kural, hangi oran ve ara toplamlar bilgisiyle gösterilir.</p>
+      </div>
+
       {error && <div className="alert error">{error}</div>}
 
       <div className="card">
-        <h2>Dönem primi</h2>
-        <p className="hint">
-          Hesap; hangi satış, hangi kural, hangi oran ve ara toplamlar bilgisiyle birlikte gösterilir.
-        </p>
-
-        <div className="grid">
+        <PeriodPicker
+          year={year}
+          month={month}
+          onYearChange={setYear}
+          onMonthChange={setMonth}
+          onRefresh={load}
+          busy={busy}
+        >
           <div>
             <label htmlFor="employeeNo">Personel no</label>
             <input
               id="employeeNo"
-              value={employeeNo}
+              value={target}
               disabled={locked}
               onChange={(e) => setEmployeeNo(e.target.value.trim().toUpperCase())}
             />
           </div>
-          <div>
-            <label htmlFor="year">Yıl</label>
-            <input id="year" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
-          </div>
-          <div>
-            <label htmlFor="month">Ay</label>
-            <select id="month" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                <option key={m} value={m}>
-                  {String(m).padStart(2, '0')}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <button className="primary" onClick={load} disabled={busy}>
-              {busy ? 'Hesaplanıyor…' : 'Hesapla'}
-            </button>
-          </div>
-        </div>
+        </PeriodPicker>
       </div>
 
       {result && (
         <>
-          <div className="card">
-            <div className="stat-row">
-              <div className="stat">
-                <span>Personel</span>
-                <strong style={{ fontSize: 17 }}>{result.fullName}</strong>
-                <div style={{ color: 'var(--muted)', fontSize: 12 }}>
-                  {result.employeeNo} · {result.department} · {result.hotel}
-                </div>
-              </div>
-              <div className="stat">
-                <span>Dönem</span>
-                <strong style={{ fontSize: 17 }}>{result.period}</strong>
-                <div>
-                  <span className={result.periodClosed ? 'badge warn' : 'badge'}>
-                    {result.periodClosed ? 'Kapalı' : 'Açık'}
-                  </span>
-                </div>
-              </div>
-              <div className="stat">
-                <span>Prime esas net ciro</span>
-                <strong>{formatMoney(result.totalSalesBase)}</strong>
-              </div>
-              <div className="stat">
-                <span>Hak edilen prim</span>
-                <strong style={{ color: 'var(--accent)' }}>{formatMoney(result.totalCommission)}</strong>
-              </div>
+          <div className="stat-grid">
+            <div className="stat-card">
+              <span>Personel</span>
+              <strong style={{ fontSize: 18 }}>{result.fullName}</strong>
+              <small>
+                {result.employeeNo} · {result.department} · {result.hotel}
+              </small>
+            </div>
+            <div className="stat-card">
+              <span>Dönem</span>
+              <strong style={{ fontSize: 18 }}>{result.period}</strong>
+              <small>
+                <span className={result.periodClosed ? 'badge warn' : 'badge'}>
+                  {result.periodClosed ? 'Kapalı' : 'Açık'}
+                </span>
+              </small>
+            </div>
+            <div className="stat-card">
+              <span>Prime esas net ciro</span>
+              <strong>{formatMoney(result.totalSalesBase)}</strong>
+              <small>iadeler düşülmüş</small>
+            </div>
+            <div className="stat-card">
+              <span>Hak edilen prim</span>
+              <strong className="accent">{formatMoney(result.totalCommission)}</strong>
+              <small>{result.steps.length} hesaplama adımı</small>
             </div>
           </div>
 
@@ -138,19 +127,17 @@ export function CommissionPage({ session }: { session: Session }) {
                   {result.steps.map((step) => (
                     <tr
                       key={step.order}
-                      className={!step.sourceDocumentNo && step.commissionAmount === 0 ? 'summary-step' : undefined}
+                      className={
+                        !step.sourceDocumentNo && step.commissionAmount === 0 ? 'summary-step' : undefined
+                      }
                     >
                       <td className="num">{step.order}</td>
                       <td>
                         <strong>{step.ruleCode}</strong>
                       </td>
                       <td>
-                        {step.sourceDocumentNo
-                          ? `${step.sourceSystem} · ${step.sourceDocumentNo}`
-                          : '—'}
-                        {step.productName && (
-                          <div style={{ color: 'var(--muted)', fontSize: 12 }}>{step.productName}</div>
-                        )}
+                        {step.sourceDocumentNo ? `${step.sourceSystem} · ${step.sourceDocumentNo}` : '—'}
+                        {step.productName && <div className="muted">{step.productName}</div>}
                       </td>
                       <td>{step.transactionDate ?? '—'}</td>
                       <td className="num">{formatMoney(step.baseAmount)}</td>
@@ -160,7 +147,7 @@ export function CommissionPage({ session }: { session: Session }) {
                         {step.appliedRate == null && step.appliedFixedAmount == null && '—'}
                       </td>
                       <td className="num">{formatMoney(step.commissionAmount)}</td>
-                      <td style={{ color: 'var(--muted)' }}>{step.explanation}</td>
+                      <td className="muted">{step.explanation}</td>
                     </tr>
                   ))}
                   {result.steps.length === 0 && (
@@ -191,9 +178,7 @@ export function CommissionPage({ session }: { session: Session }) {
           {result.excludedSales.length > 0 && (
             <div className="card">
               <h2>Prim dışı bırakılan satışlar ({result.excludedSales.length})</h2>
-              <p className="hint">
-                Hesaba girmeyen kayıtlar sessizce atılmaz; nedeniyle birlikte burada listelenir.
-              </p>
+              <p className="hint">Hesaba girmeyen kayıtlar sessizce atılmaz; nedeniyle listelenir.</p>
 
               <div className="table-scroll">
                 <table>
@@ -218,10 +203,10 @@ export function CommissionPage({ session }: { session: Session }) {
                         <td className="num">{formatMoney(sale.amountTry)}</td>
                         <td>
                           <span className="badge warn">
-                            {REASON_LABEL[sale.reasonCode] ?? sale.reasonCode}
+                            {EXCLUSION_REASON_LABEL[sale.reasonCode] ?? sale.reasonCode}
                           </span>
                         </td>
-                        <td style={{ color: 'var(--muted)' }}>{sale.reason}</td>
+                        <td className="muted">{sale.reason}</td>
                       </tr>
                     ))}
                   </tbody>

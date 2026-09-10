@@ -1,10 +1,19 @@
 import type {
   ApiError,
+  AuditLogResponse,
   CommissionResultResponse,
-  CommissionRuleResponse,
   CommissionRuleRequest,
+  CommissionRuleResponse,
   EmployeeResponse,
+  ImportBatchResponse,
+  ImportErrorResponse,
+  ImportSummaryResponse,
   LookupResponse,
+  PagedResponse,
+  PeriodResponse,
+  PeriodSummaryResponse,
+  ReconciliationResponse,
+  StagingRowResponse,
   UserRole,
 } from '../types'
 
@@ -25,7 +34,7 @@ function headers(session: Session, json = false): HeadersInit {
     'X-User-Id': session.userId,
     'X-User-Role': session.role,
   }
-  if (session.employeeNo) result['X-EmployeeResponse-No'] = session.employeeNo
+  if (session.employeeNo) result['X-Employee-No'] = session.employeeNo
   if (json) result['Content-Type'] = 'application/json'
   return result
 }
@@ -38,18 +47,22 @@ async function handle<T>(response: Response): Promise<T> {
   let message = `İstek başarısız (${response.status})`
   try {
     const body = (await response.json()) as ApiError
-    if (body?.error?.message) message = body.error.message
+    if (body?.error?.message) {
+      const details = body.error.details?.map((d) => `${d.field}: ${d.message}`).join(' · ')
+      message = details ? `${body.error.message} — ${details}` : body.error.message
+    }
   } catch {
     // Gövdesiz hata cevaplari icin varsayilan mesaj kalir.
   }
   throw new Error(message)
 }
 
+const get = <T>(session: Session, path: string) =>
+  fetch(`${BASE_URL}${path}`, { headers: headers(session) }).then(handle<T>)
+
 export const api = {
-  listRules: (session: Session) =>
-    fetch(`${BASE_URL}/api/v1/commission-rules`, { headers: headers(session) }).then(
-      handle<CommissionRuleResponse[]>,
-    ),
+  // --- Kurallar ---
+  listRules: (session: Session) => get<CommissionRuleResponse[]>(session, '/api/v1/commission-rules'),
 
   createRule: (session: Session, body: CommissionRuleRequest) =>
     fetch(`${BASE_URL}/api/v1/commission-rules`, {
@@ -71,30 +84,64 @@ export const api = {
       headers: headers(session),
     }).then(handle<void>),
 
+  // --- Prim ---
   commission: (session: Session, year: number, month: number, employeeNo: string) =>
-    fetch(`${BASE_URL}/api/v1/commissions/${year}/${month}/employees/${employeeNo}`, {
+    get<CommissionResultResponse>(
+      session,
+      `/api/v1/commissions/${year}/${month}/employees/${employeeNo}`,
+    ),
+
+  periodSummary: (session: Session, year: number, month: number) =>
+    get<PeriodSummaryResponse>(session, `/api/v1/commissions/${year}/${month}`),
+
+  reconciliation: (session: Session, year: number, month: number) =>
+    get<ReconciliationResponse>(session, `/api/v1/commissions/${year}/${month}/reconciliation`),
+
+  // --- Donem ---
+  periods: (session: Session) => get<PeriodResponse[]>(session, '/api/v1/periods'),
+
+  closePeriod: (session: Session, year: number, month: number) =>
+    fetch(`${BASE_URL}/api/v1/periods/${year}/${month}/close`, {
+      method: 'POST',
       headers: headers(session),
-    }).then(handle<CommissionResultResponse>),
+    }).then(handle<PeriodResponse>),
 
-  employees: (session: Session) =>
-    fetch(`${BASE_URL}/api/v1/employees`, { headers: headers(session) }).then(handle<EmployeeResponse[]>),
+  reopenPeriod: (session: Session, year: number, month: number) =>
+    fetch(`${BASE_URL}/api/v1/periods/${year}/${month}/reopen`, {
+      method: 'POST',
+      headers: headers(session),
+    }).then(handle<PeriodResponse>),
 
-  productGroups: (session: Session) =>
-    fetch(`${BASE_URL}/api/v1/product-groups`, { headers: headers(session) }).then(
-      handle<LookupResponse[]>,
-    ),
+  // --- Aktarim ---
+  importBatches: (session: Session) => get<ImportBatchResponse[]>(session, '/api/v1/imports'),
 
-  departments: (session: Session) =>
-    fetch(`${BASE_URL}/api/v1/departments`, { headers: headers(session) }).then(
-      handle<LookupResponse[]>,
-    ),
+  importErrors: (session: Session, batchId: string) =>
+    get<ImportErrorResponse[]>(session, `/api/v1/imports/${batchId}/errors`),
 
-  hotels: (session: Session) =>
-    fetch(`${BASE_URL}/api/v1/hotels`, { headers: headers(session) }).then(handle<LookupResponse[]>),
+  stagingRows: (session: Session, batchId: string) =>
+    get<StagingRowResponse[]>(session, `/api/v1/imports/${batchId}/staging`),
+
+  uploadImport: (session: Session, source: string, file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+
+    return fetch(`${BASE_URL}/api/v1/imports/${source}`, {
+      method: 'POST',
+      headers: headers(session),
+      body: form,
+    }).then(handle<ImportSummaryResponse>)
+  },
+
+  // --- Denetim ---
+  auditLogs: (session: Session, page: number, size: number, entityName?: string) => {
+    const query = new URLSearchParams({ page: String(page), size: String(size) })
+    if (entityName) query.set('entityName', entityName)
+    return get<PagedResponse<AuditLogResponse>>(session, `/api/v1/audit-logs?${query}`)
+  },
+
+  // --- Referans ---
+  employees: (session: Session) => get<EmployeeResponse[]>(session, '/api/v1/employees'),
+  departments: (session: Session) => get<LookupResponse[]>(session, '/api/v1/departments'),
+  hotels: (session: Session) => get<LookupResponse[]>(session, '/api/v1/hotels'),
+  productGroups: (session: Session) => get<LookupResponse[]>(session, '/api/v1/product-groups'),
 }
-
-export const formatMoney = (value: number) =>
-  new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value)
-
-export const formatPercent = (rate: number) =>
-  new Intl.NumberFormat('tr-TR', { style: 'percent', maximumFractionDigits: 2 }).format(rate)
