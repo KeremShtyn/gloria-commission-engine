@@ -18,6 +18,7 @@ public sealed class ImportService : IImportService
 {
     private readonly IReadOnlyDictionary<SourceSystem, ISourceImporter> _importers;
     private readonly IEmployeeRepository _employees;
+    private readonly IProductGroupRepository _productGroups;
     private readonly ISaleRecordRepository _sales;
     private readonly IImportRepository _imports;
     private readonly IUnitOfWork _unitOfWork;
@@ -26,6 +27,7 @@ public sealed class ImportService : IImportService
     public ImportService(
         IEnumerable<ISourceImporter> importers,
         IEmployeeRepository employees,
+        IProductGroupRepository productGroups,
         ISaleRecordRepository sales,
         IImportRepository imports,
         IUnitOfWork unitOfWork,
@@ -33,6 +35,7 @@ public sealed class ImportService : IImportService
     {
         _importers = importers.ToDictionary(i => i.SourceSystem);
         _employees = employees;
+        _productGroups = productGroups;
         _sales = sales;
         _imports = imports;
         _unitOfWork = unitOfWork;
@@ -60,6 +63,7 @@ public sealed class ImportService : IImportService
         await _unitOfWork.SaveChangesAsync(ct);
 
         var employeeIds = await _employees.GetIdsByEmployeeNoAsync(ct);
+        var groupIds = await _productGroups.GetIdsByCodeAsync(ct);
         var knownEmployees = employeeIds.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var rows = importer.Parse(content, knownEmployees);
@@ -99,11 +103,10 @@ public sealed class ImportService : IImportService
                 continue;
             }
 
-            sale.ImportBatchId = batch.Id;
-            sale.EmployeeId = employeeIds.TryGetValue(sale.EmployeeNo, out var id) ? id : null;
+            var record = ToSaleRecord(sale, batch.Id, employeeIds, groupIds);
 
-            toInsert.Add(sale);
-            insertedByRow[row.RowNumber] = sale;
+            toInsert.Add(record);
+            insertedByRow[row.RowNumber] = record;
         }
 
         _sales.AddRange(toInsert);
@@ -175,14 +178,14 @@ public sealed class ImportService : IImportService
     }
 
     public async Task<IReadOnlyList<ImportErrorResponse>> GetErrorsAsync(
-        int batchId, CancellationToken ct = default)
+        Guid batchId, CancellationToken ct = default)
     {
         var errors = await _imports.FindErrorsByBatchAsync(batchId, ct);
         return errors.Select(ImportMapper.ToResponse).ToList();
     }
 
     public async Task<IReadOnlyList<StagingRowResponse>> GetStagingRowsAsync(
-        int batchId, CancellationToken ct = default)
+        Guid batchId, CancellationToken ct = default)
     {
         var rows = await _imports.FindStagingRowsAsync(batchId, ct);
         return rows.Select(ImportMapper.ToResponse).ToList();
@@ -235,6 +238,41 @@ public sealed class ImportService : IImportService
         if (matched > 0) await _unitOfWork.SaveChangesAsync(ct);
         return matched;
     }
+
+    /// <summary>
+    /// Ayristiricinin urettigi satiri kalici kayda cevirir; yabanci anahtarlar burada cozulur.
+    /// Katalogda olmayan bir grup gelirse satir reddedilmez, "DIGER" grubuna dusurulur —
+    /// gelen satis verisi bizim kontrolumuzde degil, ona butunluk dayatmak aktarimi kirar.
+    /// </summary>
+    private static SaleRecord ToSaleRecord(
+        ParsedSale sale,
+        Guid batchId,
+        IReadOnlyDictionary<string, Guid> employeeIds,
+        IReadOnlyDictionary<string, Guid> groupIds) => new()
+    {
+        SourceSystem = sale.SourceSystem,
+        SourceDocumentNo = sale.SourceDocumentNo,
+        SourceHash = sale.SourceHash,
+        TransactionDate = sale.TransactionDate,
+        SourceEmployeeNo = sale.EmployeeNo,
+        EmployeeId = employeeIds[sale.EmployeeNo],
+        ProductCode = sale.ProductCode,
+        ProductName = sale.ProductName,
+        ProductGroupId = groupIds.TryGetValue(sale.ProductGroupCode, out var groupId)
+            ? groupId
+            : groupIds[ProductGroup.UnknownCode],
+        Quantity = sale.Quantity,
+        Amount = sale.Amount,
+        Currency = sale.Currency,
+        ExchangeRate = sale.ExchangeRate,
+        AmountTry = sale.AmountTry,
+        Status = sale.Status,
+        SourceReference = sale.SourceReference,
+        SourceHotel = sale.SourceHotel,
+        Outlet = sale.Outlet,
+        RoomNo = sale.RoomNo,
+        ImportBatchId = batchId
+    };
 
     private static void MarkStaging(
         IReadOnlyDictionary<int, StagingRow> rows, int rowNumber, StagingRowStatus status)

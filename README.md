@@ -113,6 +113,7 @@ HTTPS zorunluluğu ve login rate limit ayrıca ele alınmalıdır.
 | `GET/POST/PUT/DELETE /api/v1/commission-rules` | Kural yönetimi |
 | `POST /api/v1/imports/{pms\|pos\|erp}` | CSV aktarımı |
 | `GET /api/v1/imports/{batchId}/staging` | Bir yüklemenin ham satırları |
+| `GET /api/v1/departments`, `/hotels`, `/product-groups` | Kural kapsamı için referans listeler |
 | `POST /api/v1/periods/{yıl}/{ay}/close` | Dönem kapatma |
 | `GET /api/v1/audit-logs` | Değişiklik geçmişi |
 
@@ -136,6 +137,10 @@ Ayrıntısı [docs/adr](docs/adr) altında, özeti:
   Yeni kural eklemek bir veritabanı satırı; yeni bir *tip* eklemek yeni bir strateji sınıfı.
 - **Tarihte katı, tutarda toleranslı ayrıştırma.** `32/08/2026` reddedilir — yanlış tahmin primi
   yanlış aya yazar. `2.500,00` kabul edilir — belirsizlik yok, reddetmek gerçek ciroyu kaybettirir.
+- **Kural kapsamı yabancı anahtar.** Departman, otel ve ürün grubu referans tablolara bağlı;
+  serbest metin bir yazım hatasıyla sessizce sıfır prim üretirdi. Otel personelin özelliğidir.
+- **Birincil anahtarlar `Guid`.** Sıralı tamsayı URL'de tahmin edilebilir olur. İndeks
+  parçalanmasını önlemek için zaman damgası önekli üretiliyor (`SequentialGuid`).
 - **Ham veri saklanır.** Gelen satır önce `staging_rows`'a yazılır, ayrıştırma sonra çalışır.
   Ayrıştırıcıda hata çıkarsa kaynağa dönmeden yeniden işlenebilir.
 - **Zamanlanmış aktarım.** `ImportWatcherService` klasörü tarar, dosyayı manuel yüklemeyle

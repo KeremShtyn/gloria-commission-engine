@@ -10,7 +10,8 @@ public class CommissionDbContext : DbContext
 
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Employee> Employees => Set<Employee>();
-    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Hotel> Hotels => Set<Hotel>();
+    public DbSet<ProductGroup> ProductGroups => Set<ProductGroup>();
     public DbSet<Period> Periods => Set<Period>();
     public DbSet<SaleRecord> SaleRecords => Set<SaleRecord>();
     public DbSet<CommissionRule> CommissionRules => Set<CommissionRule>();

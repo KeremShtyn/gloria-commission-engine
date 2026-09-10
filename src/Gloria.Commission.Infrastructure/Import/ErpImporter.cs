@@ -1,6 +1,5 @@
 using Gloria.Commission.Application.Abstractions;
 using Gloria.Commission.Application.Import;
-using Gloria.Commission.Domain.Entities;
 using Gloria.Commission.Domain.Enums;
 
 namespace Gloria.Commission.Infrastructure.Import;
@@ -89,7 +88,7 @@ public sealed class ErpImporter : ISourceImporter
                 ? SaleStatus.Unposted
                 : isCreditMemo ? SaleStatus.Refund : SaleStatus.Normal;
 
-            results.Add(RowParseResult.Ok(rowNumber, rawLine, new SaleRecord
+            results.Add(RowParseResult.Ok(rowNumber, rawLine, new ParsedSale
             {
                 SourceSystem = SourceSystem.Erp,
                 SourceDocumentNo = documentNo,
@@ -98,7 +97,7 @@ public sealed class ErpImporter : ISourceImporter
                 EmployeeNo = employeeNo,
                 ProductCode = ProductCatalog.CodeFromErpDescription(description),
                 ProductName = description,
-                ProductGroup = ProductCatalog.GroupFromErpAccount(account),
+                ProductGroupCode = ProductCatalog.GroupFromErpAccount(account),
                 Quantity = 1,
                 Amount = amount,
                 Currency = currency,
@@ -106,8 +105,6 @@ public sealed class ErpImporter : ISourceImporter
                 AmountTry = Math.Round(amount * rate, 2, MidpointRounding.AwayFromZero),
                 Status = status,
                 // RM satirlarinda Reference iptal edilen belgenin numarasidir.
-                Outlet = null,
-                RoomNo = null,
                 SourceReference = CsvReaderHelper.Cell(cells, Reference)
             }));
         }

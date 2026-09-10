@@ -1,6 +1,5 @@
 using Gloria.Commission.Application.Abstractions;
 using Gloria.Commission.Application.Import;
-using Gloria.Commission.Domain.Entities;
 using Gloria.Commission.Domain.Enums;
 
 namespace Gloria.Commission.Infrastructure.Import;
@@ -75,7 +74,7 @@ public sealed class PosImporter : ISourceImporter
             var plu = CsvReaderHelper.Cell(cells, Plu) ?? "PLU";
             const decimal rate = 1m; // POS ekstresi yalnizca TRY uretir
 
-            results.Add(RowParseResult.Ok(rowNumber, rawLine, new SaleRecord
+            results.Add(RowParseResult.Ok(rowNumber, rawLine, new ParsedSale
             {
                 SourceSystem = SourceSystem.Pos,
                 SourceDocumentNo = documentNo,
@@ -84,7 +83,7 @@ public sealed class PosImporter : ISourceImporter
                 EmployeeNo = employeeNo,
                 ProductCode = $"{outlet}-{plu}",
                 ProductName = CsvReaderHelper.Cell(cells, UrunAdi) ?? plu,
-                ProductGroup = ProductCatalog.GroupFromPosOutlet(outlet),
+                ProductGroupCode = ProductCatalog.GroupFromPosOutlet(outlet),
                 Quantity = Math.Abs(quantity),
                 Amount = amount,
                 Currency = "TRY",

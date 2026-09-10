@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, formatMoney, formatPercent, type Session } from '../api/client'
-import type { CommissionRuleResponse, CommissionRuleRequest, RuleTierResponse, RuleType } from '../types'
+import type {
+  CommissionRuleResponse,
+  CommissionRuleRequest,
+  LookupResponse,
+  RuleTierResponse,
+  RuleType,
+} from '../types'
 
 const EMPTY: CommissionRuleRequest = {
   code: '',
   name: '',
   ruleType: 'Percentage',
   sourceSystem: null,
-  departmentCode: null,
-  productGroup: null,
+  departmentId: null,
+  productGroupId: null,
+  hotelId: null,
   productCode: null,
-  hotel: null,
   rate: null,
   fixedAmount: null,
   multiplyByQuantity: false,
@@ -33,9 +39,11 @@ const orNull = (value: string) => (value.trim() === '' ? null : value.trim())
 
 export function RulesPage({ session }: { session: Session }) {
   const [rules, setRules] = useState<CommissionRuleResponse[]>([])
-  const [groups, setGroups] = useState<string[]>([])
+  const [groups, setGroups] = useState<LookupResponse[]>([])
+  const [departments, setDepartments] = useState<LookupResponse[]>([])
+  const [hotels, setHotels] = useState<LookupResponse[]>([])
   const [form, setForm] = useState<CommissionRuleRequest>(EMPTY)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -44,6 +52,8 @@ export function RulesPage({ session }: { session: Session }) {
     try {
       setRules(await api.listRules(session))
       setGroups(await api.productGroups(session))
+      setDepartments(await api.departments(session))
+      setHotels(await api.hotels(session))
       setError(null)
     } catch (e) {
       setError((e as Error).message)
@@ -69,10 +79,10 @@ export function RulesPage({ session }: { session: Session }) {
       name: rule.name,
       ruleType: rule.ruleType,
       sourceSystem: rule.sourceSystem,
-      departmentCode: rule.departmentCode,
-      productGroup: rule.productGroup,
+      departmentId: rule.departmentId,
+      productGroupId: rule.productGroupId,
+      hotelId: rule.hotelId,
       productCode: rule.productCode,
-      hotel: rule.hotel,
       rate: rule.rate,
       fixedAmount: rule.fixedAmount,
       multiplyByQuantity: rule.multiplyByQuantity,
@@ -210,16 +220,16 @@ export function RulesPage({ session }: { session: Session }) {
             </select>
           </div>
           <div>
-            <label htmlFor="productGroup">Ürün grubu</label>
+            <label htmlFor="productGroupId">Ürün grubu</label>
             <select
-              id="productGroup"
-              value={form.productGroup ?? ''}
-              onChange={(e) => patch({ productGroup: orNull(e.target.value) })}
+              id="productGroupId"
+              value={form.productGroupId ?? ''}
+              onChange={(e) => patch({ productGroupId: orNull(e.target.value) })}
             >
               <option value="">Hepsi</option>
               {groups.map((group) => (
-                <option key={group} value={group}>
-                  {group}
+                <option key={group.id} value={group.id}>
+                  {group.code}
                 </option>
               ))}
             </select>
@@ -234,22 +244,34 @@ export function RulesPage({ session }: { session: Session }) {
             />
           </div>
           <div>
-            <label htmlFor="departmentCode">Departman</label>
-            <input
-              id="departmentCode"
-              value={form.departmentCode ?? ''}
-              onChange={(e) => patch({ departmentCode: orNull(e.target.value) })}
-              placeholder="Hepsi"
-            />
+            <label htmlFor="departmentId">Departman</label>
+            <select
+              id="departmentId"
+              value={form.departmentId ?? ''}
+              onChange={(e) => patch({ departmentId: orNull(e.target.value) })}
+            >
+              <option value="">Hepsi</option>
+              {departments.map((department) => (
+                <option key={department.id} value={department.id}>
+                  {department.code}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
-            <label htmlFor="hotel">Otel</label>
-            <input
-              id="hotel"
-              value={form.hotel ?? ''}
-              onChange={(e) => patch({ hotel: orNull(e.target.value) })}
-              placeholder="Hepsi"
-            />
+            <label htmlFor="hotelId">Otel</label>
+            <select
+              id="hotelId"
+              value={form.hotelId ?? ''}
+              onChange={(e) => patch({ hotelId: orNull(e.target.value) })}
+            >
+              <option value="">Hepsi</option>
+              {hotels.map((hotel) => (
+                <option key={hotel.id} value={hotel.id}>
+                  {hotel.code} — {hotel.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -415,7 +437,13 @@ export function RulesPage({ session }: { session: Session }) {
                   <td>{rule.name}</td>
                   <td>{RULE_TYPE_LABEL[rule.ruleType]}</td>
                   <td>
-                    {[rule.sourceSystem, rule.productGroup, rule.productCode, rule.departmentCode, rule.hotel]
+                    {[
+                      rule.sourceSystem,
+                      rule.productGroupCode,
+                      rule.productCode,
+                      rule.departmentCode,
+                      rule.hotelCode,
+                    ]
                       .filter(Boolean)
                       .join(' · ') || 'Tüm satışlar'}
                   </td>

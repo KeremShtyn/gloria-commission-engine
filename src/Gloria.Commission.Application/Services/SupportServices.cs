@@ -35,7 +35,7 @@ public sealed class ReconciliationService : IReconciliationService
 
         var groups = sales
             .Where(s => s.Status is SaleStatus.Normal or SaleStatus.Refund)
-            .GroupBy(s => s.ProductGroup)
+            .GroupBy(s => s.ProductGroup.Code)
             .OrderBy(g => g.Key)
             .Select(g => new ReconciliationGroupResponse
             {
@@ -106,16 +106,19 @@ public sealed class ReferenceService : IReferenceService
 {
     private readonly IEmployeeRepository _employees;
     private readonly IDepartmentRepository _departments;
-    private readonly ISaleRecordRepository _sales;
+    private readonly IHotelRepository _hotels;
+    private readonly IProductGroupRepository _productGroups;
 
     public ReferenceService(
         IEmployeeRepository employees,
         IDepartmentRepository departments,
-        ISaleRecordRepository sales)
+        IHotelRepository hotels,
+        IProductGroupRepository productGroups)
     {
         _employees = employees;
         _departments = departments;
-        _sales = sales;
+        _hotels = hotels;
+        _productGroups = productGroups;
     }
 
     public async Task<IReadOnlyList<EmployeeResponse>> GetEmployeesAsync(CancellationToken ct = default)
@@ -130,6 +133,15 @@ public sealed class ReferenceService : IReferenceService
         return departments.Select(DepartmentMapper.ToResponse).ToList();
     }
 
-    public Task<IReadOnlyList<string>> GetProductGroupsAsync(CancellationToken ct = default)
-        => _sales.FindDistinctProductGroupsAsync(ct);
+    public async Task<IReadOnlyList<ProductGroupResponse>> GetProductGroupsAsync(CancellationToken ct = default)
+    {
+        var groups = await _productGroups.FindAllAsync(ct);
+        return groups.Select(ProductGroupMapper.ToResponse).ToList();
+    }
+
+    public async Task<IReadOnlyList<HotelResponse>> GetHotelsAsync(CancellationToken ct = default)
+    {
+        var hotels = await _hotels.FindAllAsync(ct);
+        return hotels.Select(HotelMapper.ToResponse).ToList();
+    }
 }

@@ -41,6 +41,8 @@ public static class DependencyInjection
         // --- Repository katmani ---
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+        services.AddScoped<IHotelRepository, HotelRepository>();
+        services.AddScoped<IProductGroupRepository, ProductGroupRepository>();
         services.AddScoped<ICommissionRuleRepository, CommissionRuleRepository>();
         services.AddScoped<ISaleRecordRepository, SaleRecordRepository>();
         services.AddScoped<ICommissionResultRepository, CommissionResultRepository>();

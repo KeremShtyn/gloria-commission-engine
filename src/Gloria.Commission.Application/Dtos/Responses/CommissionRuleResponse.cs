@@ -2,15 +2,20 @@ namespace Gloria.Commission.Application.Dtos.Responses;
 
 public sealed record CommissionRuleResponse
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string Code { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public string RuleType { get; init; } = string.Empty;
     public string? SourceSystem { get; init; }
-    public string? DepartmentCode { get; init; }
-    public string? ProductGroup { get; init; }
+    public Guid? DepartmentId { get; init; }
+    public Guid? ProductGroupId { get; init; }
+    public Guid? HotelId { get; init; }
     public string? ProductCode { get; init; }
-    public string? Hotel { get; init; }
+
+    // Arayuzun ayrica sorgu atmamasi icin kodlar da doner.
+    public string? DepartmentCode { get; init; }
+    public string? ProductGroupCode { get; init; }
+    public string? HotelCode { get; init; }
     public decimal? Rate { get; init; }
     public decimal? FixedAmount { get; init; }
     public bool MultiplyByQuantity { get; init; }
@@ -24,7 +29,7 @@ public sealed record CommissionRuleResponse
 
 public sealed record CommissionRuleTierResponse
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public decimal MinAmount { get; init; }
     public decimal? MaxAmount { get; init; }
     public decimal Rate { get; init; }

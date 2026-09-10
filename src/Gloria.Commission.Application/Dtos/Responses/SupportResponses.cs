@@ -12,7 +12,7 @@ public sealed record PeriodResponse
 
 public sealed record AuditLogResponse
 {
-    public long Id { get; init; }
+    public Guid Id { get; init; }
     public string EntityName { get; init; } = string.Empty;
     public string EntityId { get; init; } = string.Empty;
     public string Action { get; init; } = string.Empty;
@@ -25,6 +25,7 @@ public sealed record AuditLogResponse
 
 public sealed record EmployeeResponse
 {
+    public Guid Id { get; init; }
     public string EmployeeNo { get; init; } = string.Empty;
     public string FullName { get; init; } = string.Empty;
     public string Department { get; init; } = string.Empty;
@@ -35,13 +36,28 @@ public sealed record EmployeeResponse
 
 public sealed record DepartmentResponse
 {
+    public Guid Id { get; init; }
+    public string Code { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+}
+
+public sealed record HotelResponse
+{
+    public Guid Id { get; init; }
+    public string Code { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+}
+
+public sealed record ProductGroupResponse
+{
+    public Guid Id { get; init; }
     public string Code { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
 }
 
 public sealed record ImportBatchResponse
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string SourceSystem { get; init; } = string.Empty;
     public string FileName { get; init; } = string.Empty;
     public int TotalRows { get; init; }
@@ -60,7 +76,7 @@ public sealed record StagingRowResponse
     public string SourceSystem { get; init; } = string.Empty;
     public string Status { get; init; } = string.Empty;
     public string RawLine { get; init; } = string.Empty;
-    public long? SaleRecordId { get; init; }
+    public Guid? SaleRecordId { get; init; }
     public DateTime ReceivedAtUtc { get; init; }
     public DateTime? ProcessedAtUtc { get; init; }
 }

@@ -1,4 +1,12 @@
-import type { ApiError, CommissionResultResponse, CommissionRuleResponse, EmployeeResponse, CommissionRuleRequest, UserRole } from '../types'
+import type {
+  ApiError,
+  CommissionResultResponse,
+  CommissionRuleResponse,
+  CommissionRuleRequest,
+  EmployeeResponse,
+  LookupResponse,
+  UserRole,
+} from '../types'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5199'
 
@@ -50,14 +58,14 @@ export const api = {
       body: JSON.stringify(body),
     }).then(handle<CommissionRuleResponse>),
 
-  updateRule: (session: Session, id: number, body: CommissionRuleRequest) =>
+  updateRule: (session: Session, id: string, body: CommissionRuleRequest) =>
     fetch(`${BASE_URL}/api/v1/commission-rules/${id}`, {
       method: 'PUT',
       headers: headers(session, true),
       body: JSON.stringify(body),
     }).then(handle<CommissionRuleResponse>),
 
-  deactivateRule: (session: Session, id: number) =>
+  deactivateRule: (session: Session, id: string) =>
     fetch(`${BASE_URL}/api/v1/commission-rules/${id}`, {
       method: 'DELETE',
       headers: headers(session),
@@ -72,7 +80,17 @@ export const api = {
     fetch(`${BASE_URL}/api/v1/employees`, { headers: headers(session) }).then(handle<EmployeeResponse[]>),
 
   productGroups: (session: Session) =>
-    fetch(`${BASE_URL}/api/v1/product-groups`, { headers: headers(session) }).then(handle<string[]>),
+    fetch(`${BASE_URL}/api/v1/product-groups`, { headers: headers(session) }).then(
+      handle<LookupResponse[]>,
+    ),
+
+  departments: (session: Session) =>
+    fetch(`${BASE_URL}/api/v1/departments`, { headers: headers(session) }).then(
+      handle<LookupResponse[]>,
+    ),
+
+  hotels: (session: Session) =>
+    fetch(`${BASE_URL}/api/v1/hotels`, { headers: headers(session) }).then(handle<LookupResponse[]>),
 }
 
 export const formatMoney = (value: number) =>

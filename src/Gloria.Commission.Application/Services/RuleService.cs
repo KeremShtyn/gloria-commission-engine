@@ -16,13 +16,24 @@ namespace Gloria.Commission.Application.Services;
 public sealed class RuleService : IRuleService
 {
     private readonly ICommissionRuleRepository _rules;
+    private readonly IDepartmentRepository _departments;
+    private readonly IHotelRepository _hotels;
+    private readonly IProductGroupRepository _productGroups;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _currentUser;
 
     public RuleService(
-        ICommissionRuleRepository rules, IUnitOfWork unitOfWork, ICurrentUser currentUser)
+        ICommissionRuleRepository rules,
+        IDepartmentRepository departments,
+        IHotelRepository hotels,
+        IProductGroupRepository productGroups,
+        IUnitOfWork unitOfWork,
+        ICurrentUser currentUser)
     {
         _rules = rules;
+        _departments = departments;
+        _hotels = hotels;
+        _productGroups = productGroups;
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
     }
@@ -33,7 +44,7 @@ public sealed class RuleService : IRuleService
         return rules.Select(CommissionRuleMapper.ToResponse).ToList();
     }
 
-    public async Task<CommissionRuleResponse> GetByIdAsync(int id, CancellationToken ct = default)
+    public async Task<CommissionRuleResponse> GetByIdAsync(Guid id, CancellationToken ct = default)
         => CommissionRuleMapper.ToResponse(await RequireAsync(id, ct));
 
     public async Task<CommissionRuleResponse> CreateAsync(
@@ -41,6 +52,7 @@ public sealed class RuleService : IRuleService
     {
         RequireAdmin();
         Validate(request);
+        await ValidateReferencesAsync(request, ct);
 
         if (await _rules.ExistsByCodeAsync(request.Code, excludeId: null, ct))
             throw new DomainException("RULE_CODE_EXISTS", $"'{request.Code}' kodlu kural zaten var.");
@@ -55,10 +67,11 @@ public sealed class RuleService : IRuleService
     }
 
     public async Task<CommissionRuleResponse> UpdateAsync(
-        int id, CommissionRuleRequest request, CancellationToken ct = default)
+        Guid id, CommissionRuleRequest request, CancellationToken ct = default)
     {
         RequireAdmin();
         Validate(request);
+        await ValidateReferencesAsync(request, ct);
 
         var rule = await RequireAsync(id, ct);
 
@@ -78,7 +91,7 @@ public sealed class RuleService : IRuleService
     /// Kural silinmez, pasife alinir. Gecmis donemlerin hesap adimlari kurala referans verdigi
     /// icin fiziksel silme izlenebilirligi bozardi.
     /// </summary>
-    public async Task DeactivateAsync(int id, CancellationToken ct = default)
+    public async Task DeactivateAsync(Guid id, CancellationToken ct = default)
     {
         RequireAdmin();
 
@@ -95,9 +108,38 @@ public sealed class RuleService : IRuleService
             throw new DomainException("FORBIDDEN", "Kural yonetimi icin Admin rolu gerekir.");
     }
 
-    private async Task<CommissionRule> RequireAsync(int id, CancellationToken ct)
+    private async Task<CommissionRule> RequireAsync(Guid id, CancellationToken ct)
         => await _rules.FindByIdAsync(id, ct)
            ?? throw new DomainException("RULE_NOT_FOUND", $"{id} numarali kural yok.");
+
+    /// <summary>
+    /// Kapsam olarak verilen kimlikler gercekten var mi?
+    /// Veritabani yabanci anahtari zaten engelliyor ama oradan gelen hata istemciye
+    /// "beklenmeyen hata" olarak yansir; burada anlasilir bir mesaja cevriliyor.
+    /// </summary>
+    private async Task ValidateReferencesAsync(CommissionRuleRequest request, CancellationToken ct)
+    {
+        if (request.DepartmentId is { } departmentId)
+        {
+            var departments = await _departments.FindAllAsync(ct);
+            if (departments.All(d => d.Id != departmentId))
+                throw new DomainException("DEPARTMENT_NOT_FOUND", "Secilen departman bulunamadi.");
+        }
+
+        if (request.HotelId is { } hotelId)
+        {
+            var hotels = await _hotels.FindAllAsync(ct);
+            if (hotels.All(h => h.Id != hotelId))
+                throw new DomainException("HOTEL_NOT_FOUND", "Secilen otel bulunamadi.");
+        }
+
+        if (request.ProductGroupId is { } groupId)
+        {
+            var groups = await _productGroups.FindAllAsync(ct);
+            if (groups.All(g => g.Id != groupId))
+                throw new DomainException("PRODUCT_GROUP_NOT_FOUND", "Secilen urun grubu bulunamadi.");
+        }
+    }
 
     /// <summary>
     /// Is kurali dogrulamasi. Bicimsel kontroller (zorunluluk, aralik) DTO attribute'larinda;

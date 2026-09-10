@@ -1,3 +1,4 @@
+using Gloria.Commission.Domain.Common;
 namespace Gloria.Commission.Domain.Entities;
 
 /// <summary>
@@ -6,16 +7,16 @@ namespace Gloria.Commission.Domain.Entities;
 /// </summary>
 public class CommissionResultLine
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; } = SequentialGuid.New();
 
-    public long CommissionResultId { get; set; }
+    public Guid CommissionResultId { get; set; }
     public CommissionResult CommissionResult { get; set; } = null!;
 
     /// <summary>Kademeli baremde satır bazında değil grup bazında hesap yapıldığı için null olabilir.</summary>
-    public long? SaleRecordId { get; set; }
+    public Guid? SaleRecordId { get; set; }
     public SaleRecord? SaleRecord { get; set; }
 
-    public int CommissionRuleId { get; set; }
+    public Guid CommissionRuleId { get; set; }
     public CommissionRule CommissionRule { get; set; } = null!;
 
     public string RuleCode { get; set; } = null!;

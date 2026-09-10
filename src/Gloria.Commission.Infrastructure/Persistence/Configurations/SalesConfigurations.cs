@@ -13,12 +13,11 @@ public class SaleRecordConfiguration : IEntityTypeConfiguration<SaleRecord>
 
         b.Property(x => x.SourceDocumentNo).HasMaxLength(50).IsRequired();
         b.Property(x => x.SourceHash).HasMaxLength(64).IsRequired();
-        b.Property(x => x.EmployeeNo).HasMaxLength(20).IsRequired();
+        b.Property(x => x.SourceEmployeeNo).HasMaxLength(20).IsRequired();
         b.Property(x => x.ProductCode).HasMaxLength(50).IsRequired();
         b.Property(x => x.ProductName).HasMaxLength(150).IsRequired();
-        b.Property(x => x.ProductGroup).HasMaxLength(50).IsRequired();
         b.Property(x => x.Currency).HasMaxLength(3).IsRequired();
-        b.Property(x => x.Hotel).HasMaxLength(10);
+        b.Property(x => x.SourceHotel).HasMaxLength(10);
         b.Property(x => x.Outlet).HasMaxLength(20);
         b.Property(x => x.RoomNo).HasMaxLength(20);
         b.Property(x => x.SourceReference).HasMaxLength(50);
@@ -27,16 +26,19 @@ public class SaleRecordConfiguration : IEntityTypeConfiguration<SaleRecord>
         b.Property(x => x.AmountTry).HasPrecision(18, 2);
         b.Property(x => x.ExchangeRate).HasPrecision(18, 6);
 
-        // Mukerrer kayit engelleme: ayni kaynak satiri ikinci kez yazilamaz.
+        // Mukerrer kayit engelleme: ayni kaynak belgesi ikinci kez yazilamaz.
         b.HasIndex(x => x.SourceHash).IsUnique().HasDatabaseName("uq_sale_records_source_hash");
 
         // Prim hesabinin ana sorgusu: personel + tarih araligi.
-        b.HasIndex(x => new { x.EmployeeNo, x.TransactionDate })
-            .HasDatabaseName("idx_sale_records_employee_no_transaction_date");
+        b.HasIndex(x => new { x.EmployeeId, x.TransactionDate })
+            .HasDatabaseName("idx_sale_records_employee_id_transaction_date");
         b.HasIndex(x => x.TransactionDate).HasDatabaseName("idx_sale_records_transaction_date");
 
         b.HasOne(x => x.Employee).WithMany(x => x.Sales)
             .HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Restrict);
+
+        b.HasOne(x => x.ProductGroup).WithMany(x => x.Sales)
+            .HasForeignKey(x => x.ProductGroupId).OnDelete(DeleteBehavior.Restrict);
 
         b.HasOne(x => x.ReversedSale).WithMany()
             .HasForeignKey(x => x.ReversedSaleId).OnDelete(DeleteBehavior.Restrict);
@@ -91,7 +93,6 @@ public class StagingRowConfiguration : IEntityTypeConfiguration<StagingRow>
         b.HasIndex(x => new { x.ImportBatchId, x.RowNumber })
             .HasDatabaseName("idx_staging_rows_batch_id_row_number");
 
-        // "Islenmemis satir kaldi mi" sorgusu.
         b.HasIndex(x => x.Status).HasDatabaseName("idx_staging_rows_status");
     }
 }

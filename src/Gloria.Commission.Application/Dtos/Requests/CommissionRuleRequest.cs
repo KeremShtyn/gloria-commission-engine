@@ -23,10 +23,17 @@ public sealed record CommissionRuleRequest
 
     public SourceSystem? SourceSystem { get; init; }
 
-    [MaxLength(50)] public string? DepartmentCode { get; init; }
-    [MaxLength(50)] public string? ProductGroup { get; init; }
+    /// <summary>Null ise tum departmanlar. Yabanci anahtar oldugu icin gecersiz deger reddedilir.</summary>
+    public Guid? DepartmentId { get; init; }
+
+    /// <summary>Null ise tum urun gruplari.</summary>
+    public Guid? ProductGroupId { get; init; }
+
+    /// <summary>Null ise tum oteller. Otel personelin ozelligidir, satisin degil.</summary>
+    public Guid? HotelId { get; init; }
+
+    /// <summary>Tekil urun kodu. Kaynak sistemler farkli sekillendirdigi icin serbest metin.</summary>
     [MaxLength(50)] public string? ProductCode { get; init; }
-    [MaxLength(10)] public string? Hotel { get; init; }
 
     [Range(0, 1, ErrorMessage = "Oran 0 ile 1 arasinda olmalidir (0,05 = %5).")]
     public decimal? Rate { get; init; }

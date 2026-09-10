@@ -28,9 +28,15 @@ public class ReferenceController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<DepartmentResponse>>> GetDepartments(CancellationToken ct)
         => Ok(await _referenceService.GetDepartmentsAsync(ct));
 
-    /// <summary>Satislarda gecen urun gruplari - kural tanimlarken kullanilir.</summary>
+    /// <summary>Urun gruplari - kural tanimlarken kapsam olarak kullanilir.</summary>
     [HttpGet("product-groups")]
-    [ProducesResponseType(typeof(IReadOnlyList<string>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<string>>> GetProductGroups(CancellationToken ct)
+    [ProducesResponseType(typeof(IReadOnlyList<ProductGroupResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<ProductGroupResponse>>> GetProductGroups(CancellationToken ct)
         => Ok(await _referenceService.GetProductGroupsAsync(ct));
+
+    /// <summary>Oteller - kural tanimlarken kapsam olarak kullanilir.</summary>
+    [HttpGet("hotels")]
+    [ProducesResponseType(typeof(IReadOnlyList<HotelResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<HotelResponse>>> GetHotels(CancellationToken ct)
+        => Ok(await _referenceService.GetHotelsAsync(ct));
 }

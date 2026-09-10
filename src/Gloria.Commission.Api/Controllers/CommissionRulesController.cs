@@ -30,10 +30,10 @@ public class CommissionRulesController : ControllerBase
         => Ok(await _ruleService.GetAllAsync(ct));
 
     /// <summary>Tek bir kuralin detayi.</summary>
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(CommissionRuleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CommissionRuleResponse>> GetById(int id, CancellationToken ct)
+    public async Task<ActionResult<CommissionRuleResponse>> GetById(Guid id, CancellationToken ct)
         => Ok(await _ruleService.GetByIdAsync(id, ct));
 
     /// <summary>Yeni kural olusturur. Admin rolu gerekir.</summary>
@@ -51,24 +51,24 @@ public class CommissionRulesController : ControllerBase
     }
 
     /// <summary>Kurali gunceller. Admin rolu gerekir.</summary>
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:guid}")]
     [Authorize(Policy = Policies.AdminOnly)]
     [ProducesResponseType(typeof(CommissionRuleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CommissionRuleResponse>> Update(
-        int id, [FromBody] CommissionRuleRequest request, CancellationToken ct)
+        Guid id, [FromBody] CommissionRuleRequest request, CancellationToken ct)
         => Ok(await _ruleService.UpdateAsync(id, request, ct));
 
     /// <summary>
     /// Kurali pasife alir. Fiziksel silme yapilmaz —
     /// gecmis hesap adimlari kurala referans veriyor.
     /// </summary>
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id:guid}")]
     [Authorize(Policy = Policies.AdminOnly)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Deactivate(int id, CancellationToken ct)
+    public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
     {
         await _ruleService.DeactivateAsync(id, ct);
         return NoContent();

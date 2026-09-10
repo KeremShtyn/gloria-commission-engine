@@ -1,11 +1,12 @@
+using Gloria.Commission.Domain.Common;
 namespace Gloria.Commission.Domain.Entities;
 
 /// <summary>Kademeli barem satırı. Aralık [MinAmount, MaxAmount) şeklindedir.</summary>
 public class CommissionRuleTier
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = SequentialGuid.New();
 
-    public int CommissionRuleId { get; set; }
+    public Guid CommissionRuleId { get; set; }
     public CommissionRule CommissionRule { get; set; } = null!;
 
     /// <summary>Kademenin başladığı aylık toplam ciro (dahil).</summary>

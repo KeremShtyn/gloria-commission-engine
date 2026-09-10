@@ -1,14 +1,15 @@
+using Gloria.Commission.Domain.Common;
 namespace Gloria.Commission.Domain.Entities;
 
 /// <summary>Bir personelin bir dönemdeki prim hesabının başlığı.</summary>
 public class CommissionResult
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; } = SequentialGuid.New();
 
-    public int PeriodId { get; set; }
+    public Guid PeriodId { get; set; }
     public Period Period { get; set; } = null!;
 
-    public int EmployeeId { get; set; }
+    public Guid EmployeeId { get; set; }
     public Employee Employee { get; set; } = null!;
 
     /// <summary>Prime esas net ciro (iadeler düşülmüş).</summary>

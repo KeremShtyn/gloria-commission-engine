@@ -13,10 +13,7 @@ public class CommissionRuleConfiguration : IEntityTypeConfiguration<CommissionRu
 
         b.Property(x => x.Code).HasMaxLength(50).IsRequired();
         b.Property(x => x.Name).HasMaxLength(150).IsRequired();
-        b.Property(x => x.DepartmentCode).HasMaxLength(50);
-        b.Property(x => x.ProductGroup).HasMaxLength(50);
         b.Property(x => x.ProductCode).HasMaxLength(50);
-        b.Property(x => x.Hotel).HasMaxLength(10);
 
         b.Property(x => x.Rate).HasPrecision(9, 6);
         b.Property(x => x.FixedAmount).HasPrecision(18, 2);
@@ -24,6 +21,17 @@ public class CommissionRuleConfiguration : IEntityTypeConfiguration<CommissionRu
         b.HasIndex(x => x.Code).IsUnique().HasDatabaseName("uq_commission_rules_code");
         b.HasIndex(x => new { x.IsActive, x.EffectiveFrom })
             .HasDatabaseName("idx_commission_rules_is_active_effective_from");
+
+        // Scope alanlari yabanci anahtar: serbest metin olsalardi bir yazim hatasi
+        // kuralin hicbir satisla eslesmemesine ve sessizce sifir prim uretmesine yol acardi.
+        b.HasOne(x => x.Department).WithMany()
+            .HasForeignKey(x => x.DepartmentId).OnDelete(DeleteBehavior.Restrict);
+
+        b.HasOne(x => x.ProductGroup).WithMany()
+            .HasForeignKey(x => x.ProductGroupId).OnDelete(DeleteBehavior.Restrict);
+
+        b.HasOne(x => x.Hotel).WithMany()
+            .HasForeignKey(x => x.HotelId).OnDelete(DeleteBehavior.Restrict);
 
         b.HasMany(x => x.Tiers).WithOne(x => x.CommissionRule)
             .HasForeignKey(x => x.CommissionRuleId).OnDelete(DeleteBehavior.Cascade);

@@ -67,6 +67,7 @@ public sealed record PeriodSummaryResponse
 
 public sealed record EmployeeCommissionResponse
 {
+    public Guid EmployeeId { get; init; }
     public string EmployeeNo { get; init; } = string.Empty;
     public string FullName { get; init; } = string.Empty;
     public string Department { get; init; } = string.Empty;

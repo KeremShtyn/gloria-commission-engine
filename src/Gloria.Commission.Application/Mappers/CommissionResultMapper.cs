@@ -14,7 +14,7 @@ public static class CommissionResultMapper
     {
         var salesById = sales.ToDictionary(s => s.Id);
 
-        SaleRecord? SaleOf(long? id)
+        SaleRecord? SaleOf(Guid? id)
             => id is { } saleId && salesById.TryGetValue(saleId, out var sale) ? sale : null;
 
         return new CommissionResultResponse
@@ -24,7 +24,7 @@ public static class CommissionResultMapper
             EmployeeNo = employee.EmployeeNo,
             FullName = employee.FullName,
             Department = employee.Department.Code,
-            Hotel = employee.Hotel,
+            Hotel = employee.Hotel.Code,
             TotalSalesBase = calculation.TotalSalesBase,
             TotalCommission = calculation.TotalCommission,
             CalculatedAtUtc = DateTime.UtcNow,
@@ -66,7 +66,7 @@ public static class CommissionResultMapper
 
     /// <summary>Hesap sonucunu kalici kayda cevirir; adimlar izlenebilirligin taşiyicisi.</summary>
     public static CommissionResult ToEntity(
-        int periodId, int employeeId, CommissionCalculation calculation, string calculatedBy) => new()
+        Guid periodId, Guid employeeId, CommissionCalculation calculation, string calculatedBy) => new()
     {
         PeriodId = periodId,
         EmployeeId = employeeId,

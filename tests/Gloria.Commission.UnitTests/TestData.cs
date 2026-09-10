@@ -10,6 +10,15 @@ internal static class TestData
 {
     public static readonly DateOnly Ruleset = new(2026, 1, 1);
 
+    // Referans veri testler boyunca sabit; kimlikler kural ile satis arasinda eslesmeli.
+    public static readonly Guid SpaDepartmentId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    public static readonly Guid FoodDepartmentId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    public static readonly Guid GsrHotelId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    public static readonly Guid GgrHotelId = Guid.Parse("44444444-4444-4444-4444-444444444444");
+    public static readonly Guid SpaGroupId = Guid.Parse("55555555-5555-5555-5555-555555555555");
+    public static readonly Guid AlcGroupId = Guid.Parse("66666666-6666-6666-6666-666666666666");
+    public static readonly Guid GolfGroupId = Guid.Parse("77777777-7777-7777-7777-777777777777");
+
     public static CommissionCalculator Calculator() => new(
     [
         new PercentageRuleStrategy(),
@@ -18,40 +27,43 @@ internal static class TestData
     ]);
 
     public static Employee Employee(
-        string departmentCode = "SPA",
+        Guid? departmentId = null,
+        Guid? hotelId = null,
         DateOnly? hireDate = null,
         DateOnly? terminationDate = null) => new()
     {
-        Id = 1,
+        Id = Guid.Parse("99999999-9999-9999-9999-999999999999"),
         EmployeeNo = "P1001",
         FullName = "Test Personel",
-        Hotel = "GSR",
+        DepartmentId = departmentId ?? SpaDepartmentId,
+        Department = new Department { Id = departmentId ?? SpaDepartmentId, Code = "SPA", Name = "SPA" },
+        HotelId = hotelId ?? GsrHotelId,
+        Hotel = new Hotel { Id = hotelId ?? GsrHotelId, Code = "GSR", Name = "Gloria Serenity Resort" },
         HireDate = hireDate ?? new DateOnly(2024, 1, 1),
-        TerminationDate = terminationDate,
-        Department = new Department { Id = 1, Code = departmentCode, Name = departmentCode }
+        TerminationDate = terminationDate
     };
 
     public static SaleRecord Sale(
-        long id,
+        int seed,
         decimal amount,
-        string productGroup = "SPA",
+        Guid? productGroupId = null,
         string productCode = "SPA_MSJ60",
         SaleStatus status = SaleStatus.Normal,
         int day = 5,
         int quantity = 1,
-        long? reversedSaleId = null,
+        Guid? reversedSaleId = null,
         SourceSystem source = SourceSystem.Pms) => new()
     {
-        Id = id,
+        Id = Guid.Parse($"00000000-0000-0000-0000-{seed:D12}"),
         SourceSystem = source,
-        SourceDocumentNo = $"DOC{id}",
-        SourceHash = $"hash{id}",
+        SourceDocumentNo = $"DOC{seed}",
+        SourceHash = $"hash{seed}",
         TransactionDate = new DateOnly(2026, 8, day),
-        EmployeeNo = "P1001",
-        EmployeeId = 1,
+        SourceEmployeeNo = "P1001",
+        EmployeeId = Guid.Parse("99999999-9999-9999-9999-999999999999"),
         ProductCode = productCode,
         ProductName = productCode,
-        ProductGroup = productGroup,
+        ProductGroupId = productGroupId ?? SpaGroupId,
         Quantity = quantity,
         Amount = amount,
         AmountTry = amount,
@@ -61,26 +73,26 @@ internal static class TestData
         ReversedSaleId = reversedSaleId
     };
 
-    public static CommissionRule PercentageRule(decimal rate, string productGroup = "SPA") => new()
+    public static CommissionRule PercentageRule(decimal rate, Guid? productGroupId = null) => new()
     {
-        Id = 1,
+        Id = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"),
         Code = "PCT",
         Name = "Sabit yuzde",
         RuleType = CommissionRuleType.Percentage,
-        ProductGroup = productGroup,
+        ProductGroupId = productGroupId ?? SpaGroupId,
         Rate = rate,
         EffectiveFrom = Ruleset,
         IsActive = true
     };
 
     public static CommissionRule FixedAmountRule(
-        decimal amount, bool multiplyByQuantity = false, string productGroup = "SPA") => new()
+        decimal amount, bool multiplyByQuantity = false, Guid? productGroupId = null) => new()
     {
-        Id = 2,
+        Id = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000002"),
         Code = "FIX",
         Name = "Sabit tutar",
         RuleType = CommissionRuleType.FixedAmount,
-        ProductGroup = productGroup,
+        ProductGroupId = productGroupId ?? SpaGroupId,
         FixedAmount = amount,
         MultiplyByQuantity = multiplyByQuantity,
         EffectiveFrom = Ruleset,
@@ -90,21 +102,21 @@ internal static class TestData
     /// <summary>0-30k %3, 30k-60k %5, 60k+ %7 baremi.</summary>
     public static CommissionRule TieredRule(
         TierApplication application = TierApplication.WholeAmount,
-        string productGroup = "ALC") => new()
+        Guid? productGroupId = null) => new()
     {
-        Id = 3,
+        Id = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000003"),
         Code = "TIER",
         Name = "Kademeli barem",
         RuleType = CommissionRuleType.Tiered,
-        ProductGroup = productGroup,
+        ProductGroupId = productGroupId ?? AlcGroupId,
         TierApplication = application,
         EffectiveFrom = Ruleset,
         IsActive = true,
         Tiers =
         [
-            new CommissionRuleTier { Id = 1, MinAmount = 0m,     MaxAmount = 30000m, Rate = 0.03m },
-            new CommissionRuleTier { Id = 2, MinAmount = 30000m, MaxAmount = 60000m, Rate = 0.05m },
-            new CommissionRuleTier { Id = 3, MinAmount = 60000m, MaxAmount = null,   Rate = 0.07m }
+            new CommissionRuleTier { MinAmount = 0m,     MaxAmount = 30000m, Rate = 0.03m },
+            new CommissionRuleTier { MinAmount = 30000m, MaxAmount = 60000m, Rate = 0.05m },
+            new CommissionRuleTier { MinAmount = 60000m, MaxAmount = null,   Rate = 0.07m }
         ]
     };
 }

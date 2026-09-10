@@ -67,12 +67,20 @@ Kural bir veri satırıdır, kod değil:
 
 ```
 commission_rules
-  eşleştirme:  kaynak sistem, departman, ürün grubu, ürün kodu, otel   (null = hepsi)
+  eşleştirme:  kaynak sistem, departman*, ürün grubu*, otel*, ürün kodu   (null = hepsi)
   hesaplama:   tip + oran / sabit tutar / kademeler
   geçerlilik:  öncelik, yürürlük başlangıcı, bitişi, aktif mi
 commission_rule_tiers
   kademe:      alt sınır, üst sınır, oran
+
+* yıldızlı alanlar yabancı anahtar — bkz. ADR-007
 ```
+
+Departman, ürün grubu ve otel serbest metin değil, referans tablolara bağlı. Serbest metin
+olsalardı bir yazım hatası kuralın hiçbir satışla eşleşmemesine ve sessizce sıfır prim
+üretmesine yol açardı. Otel eşleştirmesi personelin oteline bakar: kaynak dosyalarda otel
+bilgisi yalnızca PMS'te bulunuyor, satış üzerinden eşleştirilseydi POS ve ERP satışları
+hiçbir otel kuralıyla eşleşmezdi.
 
 Bir satışa birden fazla kural uyarsa önce **önceliğe**, eşitlikte **daha spesifik olana** bakılır.
 Böylece "tüm SPA satışlarına %6" kuralının üzerine "SPA_MSJ90'a %9" kuralı eklemek için

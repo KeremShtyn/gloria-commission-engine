@@ -9,6 +9,20 @@ public static class ProductCatalog
 {
     public const string Unknown = "DIGER";
 
+    /// <summary>Seed icin: katalogda tanimli tum gruplar.</summary>
+    public static IReadOnlyList<(string Code, string Name)> AllGroups =>
+    [
+        ("SPA", "SPA hizmetleri"),
+        ("ALC", "A la Carte restoran"),
+        ("BUGGY", "Buggy kiralama"),
+        ("PAVILLON", "Pavillon kullanimi"),
+        ("GOLF", "Golf"),
+        ("SPA_RETAIL", "SPA urun satisi (POS)"),
+        ("ALC_RETAIL", "Restoran urun satisi (POS)"),
+        ("BAR_RETAIL", "Bar urun satisi (POS)"),
+        (Unknown, "Gruplanmamis")
+    ];
+
     /// <summary>PMS urun kodu on eki -> grup.</summary>
     private static readonly Dictionary<string, string> PmsPrefixes = new(StringComparer.OrdinalIgnoreCase)
     {

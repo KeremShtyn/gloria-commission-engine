@@ -15,15 +15,17 @@ public sealed class EmployeeRepository : IEmployeeRepository
     public Task<Employee?> FindByEmployeeNoAsync(string employeeNo, CancellationToken ct = default)
         => _db.Employees
             .Include(e => e.Department)
+            .Include(e => e.Hotel)
             .FirstOrDefaultAsync(e => e.EmployeeNo == employeeNo, ct);
 
     public async Task<IReadOnlyList<Employee>> FindAllAsync(CancellationToken ct = default)
         => await _db.Employees
             .Include(e => e.Department)
+            .Include(e => e.Hotel)
             .OrderBy(e => e.EmployeeNo)
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyDictionary<string, int>> GetIdsByEmployeeNoAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<string, Guid>> GetIdsByEmployeeNoAsync(CancellationToken ct = default)
         => await _db.Employees.ToDictionaryAsync(e => e.EmployeeNo, e => e.Id, ct);
 
     public Task<bool> AnyAsync(CancellationToken ct = default) => _db.Employees.AnyAsync(ct);
@@ -43,6 +45,37 @@ public sealed class DepartmentRepository : IDepartmentRepository
     public void Add(Department department) => _db.Departments.Add(department);
 }
 
+public sealed class HotelRepository : IHotelRepository
+{
+    private readonly CommissionDbContext _db;
+
+    public HotelRepository(CommissionDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<Hotel>> FindAllAsync(CancellationToken ct = default)
+        => await _db.Hotels.OrderBy(h => h.Code).ToListAsync(ct);
+
+    public Task<bool> AnyAsync(CancellationToken ct = default) => _db.Hotels.AnyAsync(ct);
+
+    public void AddRange(IEnumerable<Hotel> hotels) => _db.Hotels.AddRange(hotels);
+}
+
+public sealed class ProductGroupRepository : IProductGroupRepository
+{
+    private readonly CommissionDbContext _db;
+
+    public ProductGroupRepository(CommissionDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<ProductGroup>> FindAllAsync(CancellationToken ct = default)
+        => await _db.ProductGroups.OrderBy(g => g.Code).ToListAsync(ct);
+
+    public async Task<IReadOnlyDictionary<string, Guid>> GetIdsByCodeAsync(CancellationToken ct = default)
+        => await _db.ProductGroups.ToDictionaryAsync(g => g.Code, g => g.Id, ct);
+
+    public Task<bool> AnyAsync(CancellationToken ct = default) => _db.ProductGroups.AnyAsync(ct);
+
+    public void AddRange(IEnumerable<ProductGroup> groups) => _db.ProductGroups.AddRange(groups);
+}
+
 public sealed class CommissionRuleRepository : ICommissionRuleRepository
 {
     private readonly CommissionDbContext _db;
@@ -52,11 +85,15 @@ public sealed class CommissionRuleRepository : ICommissionRuleRepository
     public async Task<IReadOnlyList<CommissionRule>> FindAllAsync(CancellationToken ct = default)
         => await _db.CommissionRules
             .Include(r => r.Tiers)
+            .Include(r => r.Department).Include(r => r.ProductGroup).Include(r => r.Hotel)
             .OrderByDescending(r => r.Priority).ThenBy(r => r.Code)
             .ToListAsync(ct);
 
-    public Task<CommissionRule?> FindByIdAsync(int id, CancellationToken ct = default)
-        => _db.CommissionRules.Include(r => r.Tiers).FirstOrDefaultAsync(r => r.Id == id, ct);
+    public Task<CommissionRule?> FindByIdAsync(Guid id, CancellationToken ct = default)
+        => _db.CommissionRules
+            .Include(r => r.Tiers)
+            .Include(r => r.Department).Include(r => r.ProductGroup).Include(r => r.Hotel)
+            .FirstOrDefaultAsync(r => r.Id == id, ct);
 
     public async Task<IReadOnlyList<CommissionRule>> FindEffectiveAsync(
         DateOnly from, DateOnly to, CancellationToken ct = default)
@@ -65,7 +102,7 @@ public sealed class CommissionRuleRepository : ICommissionRuleRepository
             .Where(r => r.IsActive && r.EffectiveFrom <= to && (r.EffectiveTo == null || r.EffectiveTo >= from))
             .ToListAsync(ct);
 
-    public Task<bool> ExistsByCodeAsync(string code, int? excludeId = null, CancellationToken ct = default)
+    public Task<bool> ExistsByCodeAsync(string code, Guid? excludeId = null, CancellationToken ct = default)
         => _db.CommissionRules.AnyAsync(r => r.Code == code && (excludeId == null || r.Id != excludeId), ct);
 
     public Task<bool> AnyAsync(CancellationToken ct = default) => _db.CommissionRules.AnyAsync(ct);
@@ -84,15 +121,17 @@ public sealed class SaleRecordRepository : ISaleRecordRepository
     public SaleRecordRepository(CommissionDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<SaleRecord>> FindByEmployeeAndPeriodAsync(
-        string employeeNo, DateOnly from, DateOnly to, CancellationToken ct = default)
+        Guid employeeId, DateOnly from, DateOnly to, CancellationToken ct = default)
         => await _db.SaleRecords
-            .Where(s => s.EmployeeNo == employeeNo && s.TransactionDate >= from && s.TransactionDate <= to)
+            .Include(s => s.ProductGroup)
+            .Where(s => s.EmployeeId == employeeId && s.TransactionDate >= from && s.TransactionDate <= to)
             .OrderBy(s => s.TransactionDate).ThenBy(s => s.SourceDocumentNo)
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<SaleRecord>> FindByPeriodAsync(
         DateOnly from, DateOnly to, CancellationToken ct = default)
         => await _db.SaleRecords
+            .Include(s => s.ProductGroup)
             .Where(s => s.TransactionDate >= from && s.TransactionDate <= to)
             .OrderBy(s => s.TransactionDate).ThenBy(s => s.SourceDocumentNo)
             .ToListAsync(ct);
@@ -132,7 +171,7 @@ public sealed class SaleRecordRepository : ISaleRecordRepository
 
         return await _db.SaleRecords
             .Where(s => s.SourceSystem == refund.SourceSystem
-                        && s.EmployeeNo == refund.EmployeeNo
+                        && s.EmployeeId == refund.EmployeeId
                         && s.ProductCode == refund.ProductCode
                         && s.Status == SaleStatus.Normal
                         && s.TransactionDate <= refund.TransactionDate
@@ -140,13 +179,6 @@ public sealed class SaleRecordRepository : ISaleRecordRepository
             .OrderByDescending(s => s.TransactionDate)
             .FirstOrDefaultAsync(ct);
     }
-
-    public async Task<IReadOnlyList<string>> FindDistinctProductGroupsAsync(CancellationToken ct = default)
-        => await _db.SaleRecords
-            .Select(s => s.ProductGroup)
-            .Distinct()
-            .OrderBy(g => g)
-            .ToListAsync(ct);
 
     public void AddRange(IEnumerable<SaleRecord> sales) => _db.SaleRecords.AddRange(sales);
 }
@@ -158,7 +190,7 @@ public sealed class CommissionResultRepository : ICommissionResultRepository
     public CommissionResultRepository(CommissionDbContext db) => _db = db;
 
     public Task<CommissionResult?> FindWithLinesAsync(
-        int periodId, int employeeId, CancellationToken ct = default)
+        Guid periodId, Guid employeeId, CancellationToken ct = default)
         => _db.CommissionResults
             .Include(r => r.Lines)
             .FirstOrDefaultAsync(r => r.PeriodId == periodId && r.EmployeeId == employeeId, ct);
@@ -229,7 +261,7 @@ public sealed class ImportRepository : IImportRepository
     public void AddStagingRows(IEnumerable<StagingRow> rows) => _db.StagingRows.AddRange(rows);
 
     public async Task<IReadOnlyList<StagingRow>> FindStagingRowsAsync(
-        int batchId, CancellationToken ct = default)
+        Guid batchId, CancellationToken ct = default)
         => await _db.StagingRows
             .AsNoTracking()
             .Where(r => r.ImportBatchId == batchId)
@@ -243,7 +275,7 @@ public sealed class ImportRepository : IImportRepository
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<ImportError>> FindErrorsByBatchAsync(
-        int batchId, CancellationToken ct = default)
+        Guid batchId, CancellationToken ct = default)
         => await _db.ImportErrors
             .AsNoTracking()
             .Where(e => e.ImportBatchId == batchId)

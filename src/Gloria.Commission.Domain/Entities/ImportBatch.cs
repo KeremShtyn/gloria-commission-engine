@@ -1,3 +1,4 @@
+using Gloria.Commission.Domain.Common;
 using Gloria.Commission.Domain.Enums;
 
 namespace Gloria.Commission.Domain.Entities;
@@ -5,7 +6,7 @@ namespace Gloria.Commission.Domain.Entities;
 /// <summary>Tek bir CSV yükleme işleminin künyesi.</summary>
 public class ImportBatch
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = SequentialGuid.New();
 
     public SourceSystem SourceSystem { get; set; }
 

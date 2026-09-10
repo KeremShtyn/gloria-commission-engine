@@ -19,9 +19,9 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.AuditLog", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("Action")
                         .HasColumnType("INTEGER");
@@ -68,9 +68,9 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.CommissionResult", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CalculatedAtUtc")
                         .HasColumnType("TEXT");
@@ -80,11 +80,11 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("PeriodId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("PeriodId")
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal>("TotalCommission")
                         .HasPrecision(18, 2)
@@ -107,9 +107,9 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.CommissionResultLine", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("AppliedFixedAmount")
                         .HasPrecision(18, 2)
@@ -127,11 +127,11 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("CommissionResultId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("CommissionResultId")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("CommissionRuleId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("CommissionRuleId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Explanation")
                         .IsRequired()
@@ -151,8 +151,8 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");
 
-                    b.Property<long?>("SaleRecordId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("SaleRecordId")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("StepOrder")
                         .HasColumnType("INTEGER");
@@ -170,9 +170,9 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.CommissionRule", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -182,8 +182,7 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DepartmentCode")
-                        .HasMaxLength(50)
+                    b.Property<Guid?>("DepartmentId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateOnly>("EffectiveFrom")
@@ -196,8 +195,7 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Hotel")
-                        .HasMaxLength(10)
+                    b.Property<Guid?>("HotelId")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -218,8 +216,7 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ProductGroup")
-                        .HasMaxLength(50)
+                    b.Property<Guid?>("ProductGroupId")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Rate")
@@ -244,6 +241,12 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_commission_rules_code");
 
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("HotelId");
+
+                    b.HasIndex("ProductGroupId");
+
                     b.HasIndex("IsActive", "EffectiveFrom")
                         .HasDatabaseName("idx_commission_rules_is_active_effective_from");
 
@@ -252,12 +255,12 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.CommissionRuleTier", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("CommissionRuleId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("CommissionRuleId")
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("MaxAmount")
                         .HasPrecision(18, 2)
@@ -281,9 +284,9 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.Department", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -306,12 +309,12 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.Employee", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("EmployeeNo")
                         .IsRequired()
@@ -326,9 +329,7 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly>("HireDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Hotel")
-                        .IsRequired()
-                        .HasMaxLength(10)
+                    b.Property<Guid>("HotelId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateOnly?>("TerminationDate")
@@ -342,14 +343,41 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("uq_employees_employee_no");
 
+                    b.HasIndex("HotelId");
+
                     b.ToTable("employees", (string)null);
+                });
+
+            modelBuilder.Entity("Gloria.Commission.Domain.Entities.Hotel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("uq_hotels_code");
+
+                    b.ToTable("hotels", (string)null);
                 });
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.ImportBatch", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("TEXT");
@@ -397,9 +425,9 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.ImportError", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("TEXT");
@@ -414,8 +442,8 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ImportBatchId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("ImportBatchId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("RawLine")
                         .IsRequired()
@@ -434,9 +462,9 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.Period", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("ClosedAtUtc")
                         .HasColumnType("TEXT");
@@ -463,11 +491,11 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.ToTable("periods", (string)null);
                 });
 
-            modelBuilder.Entity("Gloria.Commission.Domain.Entities.Product", b =>
+            modelBuilder.Entity("Gloria.Commission.Domain.Entities.ProductGroup", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -476,28 +504,23 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ProductGroup")
-                        .IsRequired()
-                        .HasMaxLength(50)
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("uq_products_code");
+                        .HasDatabaseName("uq_product_groups_code");
 
-                    b.ToTable("products", (string)null);
+                    b.ToTable("product_groups", (string)null);
                 });
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.SaleRecord", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
@@ -515,24 +538,15 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("EmployeeId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("EmployeeNo")
-                        .IsRequired()
-                        .HasMaxLength(20)
+                    b.Property<Guid>("EmployeeId")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("ExchangeRate")
                         .HasPrecision(18, 6)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Hotel")
-                        .HasMaxLength(10)
+                    b.Property<Guid>("ImportBatchId")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("ImportBatchId")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Outlet")
                         .HasMaxLength(20)
@@ -543,9 +557,7 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ProductGroup")
-                        .IsRequired()
-                        .HasMaxLength(50)
+                    b.Property<Guid>("ProductGroupId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ProductName")
@@ -556,8 +568,8 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("ReversedSaleId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("ReversedSaleId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("RoomNo")
                         .HasMaxLength(20)
@@ -568,9 +580,18 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("SourceEmployeeNo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("SourceHash")
                         .IsRequired()
                         .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SourceHotel")
+                        .HasMaxLength(10)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SourceReference")
@@ -588,9 +609,9 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmployeeId");
-
                     b.HasIndex("ImportBatchId");
+
+                    b.HasIndex("ProductGroupId");
 
                     b.HasIndex("ReversedSaleId");
 
@@ -601,20 +622,20 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.HasIndex("TransactionDate")
                         .HasDatabaseName("idx_sale_records_transaction_date");
 
-                    b.HasIndex("EmployeeNo", "TransactionDate")
-                        .HasDatabaseName("idx_sale_records_employee_no_transaction_date");
+                    b.HasIndex("EmployeeId", "TransactionDate")
+                        .HasDatabaseName("idx_sale_records_employee_id_transaction_date");
 
                     b.ToTable("sale_records", (string)null);
                 });
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.StagingRow", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("ImportBatchId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("ImportBatchId")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("ProcessedAtUtc")
                         .HasColumnType("TEXT");
@@ -630,8 +651,8 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.Property<int>("RowNumber")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("SaleRecordId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid?>("SaleRecordId")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SourceSystem")
                         .HasColumnType("INTEGER");
@@ -695,6 +716,30 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.Navigation("SaleRecord");
                 });
 
+            modelBuilder.Entity("Gloria.Commission.Domain.Entities.CommissionRule", b =>
+                {
+                    b.HasOne("Gloria.Commission.Domain.Entities.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Gloria.Commission.Domain.Entities.Hotel", "Hotel")
+                        .WithMany()
+                        .HasForeignKey("HotelId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Gloria.Commission.Domain.Entities.ProductGroup", "ProductGroup")
+                        .WithMany()
+                        .HasForeignKey("ProductGroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Hotel");
+
+                    b.Navigation("ProductGroup");
+                });
+
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.CommissionRuleTier", b =>
                 {
                     b.HasOne("Gloria.Commission.Domain.Entities.CommissionRule", "CommissionRule")
@@ -714,7 +759,15 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Gloria.Commission.Domain.Entities.Hotel", "Hotel")
+                        .WithMany("Employees")
+                        .HasForeignKey("HotelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Department");
+
+                    b.Navigation("Hotel");
                 });
 
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.ImportError", b =>
@@ -733,11 +786,18 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.HasOne("Gloria.Commission.Domain.Entities.Employee", "Employee")
                         .WithMany("Sales")
                         .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Gloria.Commission.Domain.Entities.ImportBatch", "ImportBatch")
                         .WithMany()
                         .HasForeignKey("ImportBatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Gloria.Commission.Domain.Entities.ProductGroup", "ProductGroup")
+                        .WithMany("Sales")
+                        .HasForeignKey("ProductGroupId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -749,6 +809,8 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("ImportBatch");
+
+                    b.Navigation("ProductGroup");
 
                     b.Navigation("ReversedSale");
                 });
@@ -784,9 +846,19 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                     b.Navigation("Sales");
                 });
 
+            modelBuilder.Entity("Gloria.Commission.Domain.Entities.Hotel", b =>
+                {
+                    b.Navigation("Employees");
+                });
+
             modelBuilder.Entity("Gloria.Commission.Domain.Entities.ImportBatch", b =>
                 {
                     b.Navigation("Errors");
+                });
+
+            modelBuilder.Entity("Gloria.Commission.Domain.Entities.ProductGroup", b =>
+                {
+                    b.Navigation("Sales");
                 });
 #pragma warning restore 612, 618
         }

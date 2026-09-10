@@ -8,10 +8,10 @@ namespace Gloria.Commission.Application.Services;
 public interface IRuleService
 {
     Task<IReadOnlyList<CommissionRuleResponse>> GetAllAsync(CancellationToken ct = default);
-    Task<CommissionRuleResponse> GetByIdAsync(int id, CancellationToken ct = default);
+    Task<CommissionRuleResponse> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<CommissionRuleResponse> CreateAsync(CommissionRuleRequest request, CancellationToken ct = default);
-    Task<CommissionRuleResponse> UpdateAsync(int id, CommissionRuleRequest request, CancellationToken ct = default);
-    Task DeactivateAsync(int id, CancellationToken ct = default);
+    Task<CommissionRuleResponse> UpdateAsync(Guid id, CommissionRuleRequest request, CancellationToken ct = default);
+    Task DeactivateAsync(Guid id, CancellationToken ct = default);
 }
 
 public interface ICommissionService
@@ -35,8 +35,8 @@ public interface IImportService
         SourceSystem source, string fileName, string content, CancellationToken ct = default);
 
     Task<IReadOnlyList<ImportBatchResponse>> GetBatchesAsync(CancellationToken ct = default);
-    Task<IReadOnlyList<ImportErrorResponse>> GetErrorsAsync(int batchId, CancellationToken ct = default);
-    Task<IReadOnlyList<StagingRowResponse>> GetStagingRowsAsync(int batchId, CancellationToken ct = default);
+    Task<IReadOnlyList<ImportErrorResponse>> GetErrorsAsync(Guid batchId, CancellationToken ct = default);
+    Task<IReadOnlyList<StagingRowResponse>> GetStagingRowsAsync(Guid batchId, CancellationToken ct = default);
 }
 
 public interface IReconciliationService
@@ -54,5 +54,6 @@ public interface IReferenceService
 {
     Task<IReadOnlyList<EmployeeResponse>> GetEmployeesAsync(CancellationToken ct = default);
     Task<IReadOnlyList<DepartmentResponse>> GetDepartmentsAsync(CancellationToken ct = default);
-    Task<IReadOnlyList<string>> GetProductGroupsAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<ProductGroupResponse>> GetProductGroupsAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<HotelResponse>> GetHotelsAsync(CancellationToken ct = default);
 }

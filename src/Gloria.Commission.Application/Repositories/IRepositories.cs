@@ -15,7 +15,7 @@ public interface IEmployeeRepository
     Task<IReadOnlyList<Employee>> FindAllAsync(CancellationToken ct = default);
 
     /// <summary>Aktarim sirasinda personel numarasini kimlige cevirmek icin.</summary>
-    Task<IReadOnlyDictionary<string, int>> GetIdsByEmployeeNoAsync(CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, Guid>> GetIdsByEmployeeNoAsync(CancellationToken ct = default);
 
     Task<bool> AnyAsync(CancellationToken ct = default);
     void AddRange(IEnumerable<Employee> employees);
@@ -27,16 +27,34 @@ public interface IDepartmentRepository
     void Add(Department department);
 }
 
+public interface IHotelRepository
+{
+    Task<IReadOnlyList<Hotel>> FindAllAsync(CancellationToken ct = default);
+    Task<bool> AnyAsync(CancellationToken ct = default);
+    void AddRange(IEnumerable<Hotel> hotels);
+}
+
+public interface IProductGroupRepository
+{
+    Task<IReadOnlyList<ProductGroup>> FindAllAsync(CancellationToken ct = default);
+
+    /// <summary>Aktarim sirasinda grup kodunu kimlige cevirmek icin.</summary>
+    Task<IReadOnlyDictionary<string, Guid>> GetIdsByCodeAsync(CancellationToken ct = default);
+
+    Task<bool> AnyAsync(CancellationToken ct = default);
+    void AddRange(IEnumerable<ProductGroup> groups);
+}
+
 public interface ICommissionRuleRepository
 {
     Task<IReadOnlyList<CommissionRule>> FindAllAsync(CancellationToken ct = default);
-    Task<CommissionRule?> FindByIdAsync(int id, CancellationToken ct = default);
+    Task<CommissionRule?> FindByIdAsync(Guid id, CancellationToken ct = default);
 
     /// <summary>Verilen tarih araliginda yururlukte olan aktif kurallar.</summary>
     Task<IReadOnlyList<CommissionRule>> FindEffectiveAsync(
         DateOnly from, DateOnly to, CancellationToken ct = default);
 
-    Task<bool> ExistsByCodeAsync(string code, int? excludeId = null, CancellationToken ct = default);
+    Task<bool> ExistsByCodeAsync(string code, Guid? excludeId = null, CancellationToken ct = default);
     Task<bool> AnyAsync(CancellationToken ct = default);
 
     void Add(CommissionRule rule);
@@ -47,7 +65,7 @@ public interface ICommissionRuleRepository
 public interface ISaleRecordRepository
 {
     Task<IReadOnlyList<SaleRecord>> FindByEmployeeAndPeriodAsync(
-        string employeeNo, DateOnly from, DateOnly to, CancellationToken ct = default);
+        Guid employeeId, DateOnly from, DateOnly to, CancellationToken ct = default);
 
     Task<IReadOnlyList<SaleRecord>> FindByPeriodAsync(
         DateOnly from, DateOnly to, CancellationToken ct = default);
@@ -59,15 +77,13 @@ public interface ISaleRecordRepository
     /// <summary>Bir iadenin iptal ettigi orijinal satis. Once referansa, sonra icerige bakilir.</summary>
     Task<SaleRecord?> FindOriginalForRefundAsync(SaleRecord refund, CancellationToken ct = default);
 
-    Task<IReadOnlyList<string>> FindDistinctProductGroupsAsync(CancellationToken ct = default);
-
     void AddRange(IEnumerable<SaleRecord> sales);
 }
 
 public interface ICommissionResultRepository
 {
     Task<CommissionResult?> FindWithLinesAsync(
-        int periodId, int employeeId, CancellationToken ct = default);
+        Guid periodId, Guid employeeId, CancellationToken ct = default);
 
     void Add(CommissionResult result);
     void Remove(CommissionResult result);
@@ -96,12 +112,12 @@ public interface IImportRepository
     void AddStagingRows(IEnumerable<StagingRow> rows);
 
     /// <summary>Bir partinin ham satirlari. Yeniden isleme ve mutabakat icin.</summary>
-    Task<IReadOnlyList<StagingRow>> FindStagingRowsAsync(int batchId, CancellationToken ct = default);
+    Task<IReadOnlyList<StagingRow>> FindStagingRowsAsync(Guid batchId, CancellationToken ct = default);
 
     Task<IReadOnlyList<ImportBatch>> FindBatchesAsync(CancellationToken ct = default);
 
     Task<IReadOnlyList<ImportError>> FindErrorsByBatchAsync(
-        int batchId, CancellationToken ct = default);
+        Guid batchId, CancellationToken ct = default);
 
     /// <summary>Mutabakat raporu icin hata kodu dagilimlari.</summary>
     Task<IReadOnlyList<(string ErrorCode, int Count)>> CountErrorsByCodeAsync(

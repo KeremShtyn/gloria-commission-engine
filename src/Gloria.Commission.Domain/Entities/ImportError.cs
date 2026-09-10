@@ -1,3 +1,4 @@
+using Gloria.Commission.Domain.Common;
 namespace Gloria.Commission.Domain.Entities;
 
 /// <summary>
@@ -6,9 +7,9 @@ namespace Gloria.Commission.Domain.Entities;
 /// </summary>
 public class ImportError
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; } = SequentialGuid.New();
 
-    public int ImportBatchId { get; set; }
+    public Guid ImportBatchId { get; set; }
     public ImportBatch ImportBatch { get; set; } = null!;
 
     /// <summary>CSV'deki fiziksel satır numarası (başlık = 1).</summary>

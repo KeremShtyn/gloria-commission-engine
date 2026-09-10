@@ -6,7 +6,7 @@ namespace Gloria.Commission.Application.Rules;
 /// </summary>
 public sealed record CalculationStep
 {
-    public long? SaleRecordId { get; init; }
+    public Guid? SaleRecordId { get; init; }
     public decimal BaseAmount { get; init; }
     public decimal? AppliedRate { get; init; }
     public decimal? AppliedFixedAmount { get; init; }

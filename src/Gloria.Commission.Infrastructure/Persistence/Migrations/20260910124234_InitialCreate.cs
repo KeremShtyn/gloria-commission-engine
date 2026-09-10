@@ -15,8 +15,7 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 name: "audit_logs",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     EntityName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     EntityId = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     Action = table.Column<int>(type: "INTEGER", nullable: false),
@@ -32,41 +31,10 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "commission_rules",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Code = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
-                    RuleType = table.Column<int>(type: "INTEGER", nullable: false),
-                    SourceSystem = table.Column<int>(type: "INTEGER", nullable: true),
-                    DepartmentCode = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    ProductGroup = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    ProductCode = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    Hotel = table.Column<string>(type: "TEXT", maxLength: 10, nullable: true),
-                    Rate = table.Column<decimal>(type: "TEXT", precision: 9, scale: 6, nullable: true),
-                    FixedAmount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: true),
-                    MultiplyByQuantity = table.Column<bool>(type: "INTEGER", nullable: false),
-                    TierApplication = table.Column<int>(type: "INTEGER", nullable: false),
-                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
-                    EffectiveFrom = table.Column<DateOnly>(type: "TEXT", nullable: false),
-                    EffectiveTo = table.Column<DateOnly>(type: "TEXT", nullable: true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_commission_rules", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "departments",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Code = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
                 },
@@ -76,11 +44,23 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "hotels",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Code = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_hotels", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "import_batches",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     SourceSystem = table.Column<int>(type: "INTEGER", nullable: false),
                     FileName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
                     FileHash = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
@@ -101,8 +81,7 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 name: "periods",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Year = table.Column<int>(type: "INTEGER", nullable: false),
                     Month = table.Column<int>(type: "INTEGER", nullable: false),
                     Status = table.Column<int>(type: "INTEGER", nullable: false),
@@ -115,52 +94,27 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "products",
+                name: "product_groups",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Code = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
-                    ProductGroup = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false)
+                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_products", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "commission_rule_tiers",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CommissionRuleId = table.Column<int>(type: "INTEGER", nullable: false),
-                    MinAmount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
-                    MaxAmount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: true),
-                    Rate = table.Column<decimal>(type: "TEXT", precision: 9, scale: 6, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_commission_rule_tiers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_commission_rule_tiers_commission_rules_CommissionRuleId",
-                        column: x => x.CommissionRuleId,
-                        principalTable: "commission_rules",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                    table.PrimaryKey("PK_product_groups", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
                 name: "employees",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     EmployeeNo = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     FullName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
-                    DepartmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Hotel = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    DepartmentId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    HotelId = table.Column<Guid>(type: "TEXT", nullable: false),
                     HireDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     TerminationDate = table.Column<DateOnly>(type: "TEXT", nullable: true)
                 },
@@ -173,15 +127,20 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         principalTable: "departments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_employees_hotels_HotelId",
+                        column: x => x.HotelId,
+                        principalTable: "hotels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
                 name: "import_errors",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ImportBatchId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ImportBatchId = table.Column<Guid>(type: "TEXT", nullable: false),
                     RowNumber = table.Column<int>(type: "INTEGER", nullable: false),
                     RawLine = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
                     ErrorCode = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
@@ -200,13 +159,84 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "staging_rows",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ImportBatchId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    SourceSystem = table.Column<int>(type: "INTEGER", nullable: false),
+                    RowNumber = table.Column<int>(type: "INTEGER", nullable: false),
+                    RawLine = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    SaleRecordId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    ReceivedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ProcessedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_staging_rows", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_staging_rows_import_batches_ImportBatchId",
+                        column: x => x.ImportBatchId,
+                        principalTable: "import_batches",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "commission_rules",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Code = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
+                    RuleType = table.Column<int>(type: "INTEGER", nullable: false),
+                    SourceSystem = table.Column<int>(type: "INTEGER", nullable: true),
+                    DepartmentId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    ProductGroupId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    HotelId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    ProductCode = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    Rate = table.Column<decimal>(type: "TEXT", precision: 9, scale: 6, nullable: true),
+                    FixedAmount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: true),
+                    MultiplyByQuantity = table.Column<bool>(type: "INTEGER", nullable: false),
+                    TierApplication = table.Column<int>(type: "INTEGER", nullable: false),
+                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    EffectiveFrom = table.Column<DateOnly>(type: "TEXT", nullable: false),
+                    EffectiveTo = table.Column<DateOnly>(type: "TEXT", nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_commission_rules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_commission_rules_departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "departments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_commission_rules_hotels_HotelId",
+                        column: x => x.HotelId,
+                        principalTable: "hotels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_commission_rules_product_groups_ProductGroupId",
+                        column: x => x.ProductGroupId,
+                        principalTable: "product_groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "commission_results",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    PeriodId = table.Column<int>(type: "INTEGER", nullable: false),
-                    EmployeeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    PeriodId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    EmployeeId = table.Column<Guid>(type: "TEXT", nullable: false),
                     TotalSalesBase = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
                     TotalCommission = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
                     CalculatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -233,29 +263,28 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 name: "sale_records",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     SourceSystem = table.Column<int>(type: "INTEGER", nullable: false),
                     SourceDocumentNo = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     SourceHash = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
                     TransactionDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
-                    EmployeeNo = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    EmployeeId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SourceEmployeeNo = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    EmployeeId = table.Column<Guid>(type: "TEXT", nullable: false),
                     ProductCode = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     ProductName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
-                    ProductGroup = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    ProductGroupId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Quantity = table.Column<int>(type: "INTEGER", nullable: false),
                     Amount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
                     Currency = table.Column<string>(type: "TEXT", maxLength: 3, nullable: false),
                     AmountTry = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
                     ExchangeRate = table.Column<decimal>(type: "TEXT", precision: 18, scale: 6, nullable: false),
                     Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    ReversedSaleId = table.Column<Guid>(type: "TEXT", nullable: true),
                     SourceReference = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    ReversedSaleId = table.Column<long>(type: "INTEGER", nullable: true),
-                    Hotel = table.Column<string>(type: "TEXT", maxLength: 10, nullable: true),
+                    SourceHotel = table.Column<string>(type: "TEXT", maxLength: 10, nullable: true),
                     Outlet = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
                     RoomNo = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    ImportBatchId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ImportBatchId = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -274,6 +303,12 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
+                        name: "FK_sale_records_product_groups_ProductGroupId",
+                        column: x => x.ProductGroupId,
+                        principalTable: "product_groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_sale_records_sale_records_ReversedSaleId",
                         column: x => x.ReversedSaleId,
                         principalTable: "sale_records",
@@ -282,14 +317,34 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "commission_rule_tiers",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CommissionRuleId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    MinAmount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
+                    MaxAmount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: true),
+                    Rate = table.Column<decimal>(type: "TEXT", precision: 9, scale: 6, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_commission_rule_tiers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_commission_rule_tiers_commission_rules_CommissionRuleId",
+                        column: x => x.CommissionRuleId,
+                        principalTable: "commission_rules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "commission_result_lines",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CommissionResultId = table.Column<long>(type: "INTEGER", nullable: false),
-                    SaleRecordId = table.Column<long>(type: "INTEGER", nullable: true),
-                    CommissionRuleId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CommissionResultId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    SaleRecordId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    CommissionRuleId = table.Column<Guid>(type: "TEXT", nullable: false),
                     RuleCode = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     RuleType = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
                     BaseAmount = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
@@ -365,6 +420,21 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 columns: new[] { "CommissionRuleId", "MinAmount" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_commission_rules_DepartmentId",
+                table: "commission_rules",
+                column: "DepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_commission_rules_HotelId",
+                table: "commission_rules",
+                column: "HotelId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_commission_rules_ProductGroupId",
+                table: "commission_rules",
+                column: "ProductGroupId");
+
+            migrationBuilder.CreateIndex(
                 name: "idx_commission_rules_is_active_effective_from",
                 table: "commission_rules",
                 columns: new[] { "IsActive", "EffectiveFrom" });
@@ -387,9 +457,20 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_employees_HotelId",
+                table: "employees",
+                column: "HotelId");
+
+            migrationBuilder.CreateIndex(
                 name: "uq_employees_employee_no",
                 table: "employees",
                 column: "EmployeeNo",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "uq_hotels_code",
+                table: "hotels",
+                column: "Code",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -409,15 +490,10 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "uq_products_code",
-                table: "products",
+                name: "uq_product_groups_code",
+                table: "product_groups",
                 column: "Code",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sale_records_EmployeeId",
-                table: "sale_records",
-                column: "EmployeeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_sale_records_ImportBatchId",
@@ -425,14 +501,19 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 column: "ImportBatchId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_sale_records_ProductGroupId",
+                table: "sale_records",
+                column: "ProductGroupId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_sale_records_ReversedSaleId",
                 table: "sale_records",
                 column: "ReversedSaleId");
 
             migrationBuilder.CreateIndex(
-                name: "idx_sale_records_employee_no_transaction_date",
+                name: "idx_sale_records_employee_id_transaction_date",
                 table: "sale_records",
-                columns: new[] { "EmployeeNo", "TransactionDate" });
+                columns: new[] { "EmployeeId", "TransactionDate" });
 
             migrationBuilder.CreateIndex(
                 name: "idx_sale_records_transaction_date",
@@ -444,6 +525,16 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 table: "sale_records",
                 column: "SourceHash",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "idx_staging_rows_batch_id_row_number",
+                table: "staging_rows",
+                columns: new[] { "ImportBatchId", "RowNumber" });
+
+            migrationBuilder.CreateIndex(
+                name: "idx_staging_rows_status",
+                table: "staging_rows",
+                column: "Status");
         }
 
         /// <inheritdoc />
@@ -462,7 +553,7 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 name: "import_errors");
 
             migrationBuilder.DropTable(
-                name: "products");
+                name: "staging_rows");
 
             migrationBuilder.DropTable(
                 name: "commission_results");
@@ -483,7 +574,13 @@ namespace Gloria.Commission.Infrastructure.Persistence.Migrations
                 name: "import_batches");
 
             migrationBuilder.DropTable(
+                name: "product_groups");
+
+            migrationBuilder.DropTable(
                 name: "departments");
+
+            migrationBuilder.DropTable(
+                name: "hotels");
         }
     }
 }

@@ -1,6 +1,5 @@
 using Gloria.Commission.Application.Abstractions;
 using Gloria.Commission.Application.Import;
-using Gloria.Commission.Domain.Entities;
 using Gloria.Commission.Domain.Enums;
 
 namespace Gloria.Commission.Infrastructure.Import;
@@ -82,7 +81,7 @@ public sealed class PmsImporter : ISourceImporter
                 continue;
             }
 
-            results.Add(RowParseResult.Ok(rowNumber, rawLine, new SaleRecord
+            results.Add(RowParseResult.Ok(rowNumber, rawLine, new ParsedSale
             {
                 SourceSystem = SourceSystem.Pms,
                 SourceDocumentNo = documentNo,
@@ -91,14 +90,14 @@ public sealed class PmsImporter : ISourceImporter
                 EmployeeNo = employeeNo,
                 ProductCode = productCode,
                 ProductName = CsvReaderHelper.Cell(cells, UrunAdi) ?? productCode,
-                ProductGroup = ProductCatalog.GroupFromPmsCode(productCode),
+                ProductGroupCode = ProductCatalog.GroupFromPmsCode(productCode),
                 Quantity = Math.Abs(quantity),
                 Amount = amount,
                 Currency = currency,
                 ExchangeRate = rate,
                 AmountTry = Math.Round(amount * rate, 2, MidpointRounding.AwayFromZero),
                 Status = isReversal ? SaleStatus.Refund : SaleStatus.Normal,
-                Hotel = CsvReaderHelper.Cell(cells, Otel),
+                SourceHotel = CsvReaderHelper.Cell(cells, Otel),
                 RoomNo = CsvReaderHelper.Cell(cells, OdaNo)
             }));
         }

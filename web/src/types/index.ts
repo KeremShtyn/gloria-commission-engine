@@ -3,22 +3,31 @@ export type UserRole = 'Admin' | 'Accounting' | 'EmployeeResponse'
 export type RuleType = 'Percentage' | 'Tiered' | 'FixedAmount'
 
 export interface RuleTierResponse {
-  id?: number
+  id?: string
   minAmount: number
   maxAmount: number | null
   rate: number
 }
 
+export interface LookupResponse {
+  id: string
+  code: string
+  name: string
+}
+
 export interface CommissionRuleResponse {
-  id: number
+  id: string
   code: string
   name: string
   ruleType: RuleType
   sourceSystem: string | null
-  departmentCode: string | null
-  productGroup: string | null
+  departmentId: string | null
+  productGroupId: string | null
+  hotelId: string | null
   productCode: string | null
-  hotel: string | null
+  departmentCode: string | null
+  productGroupCode: string | null
+  hotelCode: string | null
   rate: number | null
   fixedAmount: number | null
   multiplyByQuantity: boolean
@@ -30,7 +39,10 @@ export interface CommissionRuleResponse {
   tiers: RuleTierResponse[]
 }
 
-export type CommissionRuleRequest = Omit<CommissionRuleResponse, 'id' | 'tiers'> & { tiers: RuleTierResponse[] }
+export type CommissionRuleRequest = Omit<
+  CommissionRuleResponse,
+  'id' | 'tiers' | 'departmentCode' | 'productGroupCode' | 'hotelCode'
+> & { tiers: RuleTierResponse[] }
 
 export interface CommissionStepResponse {
   order: number
@@ -75,6 +87,7 @@ export interface CommissionResultResponse {
 }
 
 export interface EmployeeResponse {
+  id: string
   employeeNo: string
   fullName: string
   department: string

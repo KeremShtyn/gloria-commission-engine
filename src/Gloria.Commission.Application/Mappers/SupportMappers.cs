@@ -36,10 +36,11 @@ public static class EmployeeMapper
 {
     public static EmployeeResponse ToResponse(Employee employee) => new()
     {
+        Id = employee.Id,
         EmployeeNo = employee.EmployeeNo,
         FullName = employee.FullName,
         Department = employee.Department.Code,
-        Hotel = employee.Hotel,
+        Hotel = employee.Hotel.Code,
         HireDate = employee.HireDate,
         TerminationDate = employee.TerminationDate
     };
@@ -49,8 +50,29 @@ public static class DepartmentMapper
 {
     public static DepartmentResponse ToResponse(Department department) => new()
     {
+        Id = department.Id,
         Code = department.Code,
         Name = department.Name
+    };
+}
+
+public static class HotelMapper
+{
+    public static HotelResponse ToResponse(Hotel hotel) => new()
+    {
+        Id = hotel.Id,
+        Code = hotel.Code,
+        Name = hotel.Name
+    };
+}
+
+public static class ProductGroupMapper
+{
+    public static ProductGroupResponse ToResponse(ProductGroup group) => new()
+    {
+        Id = group.Id,
+        Code = group.Code,
+        Name = group.Name
     };
 }
 

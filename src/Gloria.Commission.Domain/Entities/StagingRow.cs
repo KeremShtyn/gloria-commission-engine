@@ -1,3 +1,4 @@
+using Gloria.Commission.Domain.Common;
 using Gloria.Commission.Domain.Enums;
 
 namespace Gloria.Commission.Domain.Entities;
@@ -14,9 +15,9 @@ namespace Gloria.Commission.Domain.Entities;
 /// </summary>
 public class StagingRow
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; } = SequentialGuid.New();
 
-    public int ImportBatchId { get; set; }
+    public Guid ImportBatchId { get; set; }
     public ImportBatch ImportBatch { get; set; } = null!;
 
     public SourceSystem SourceSystem { get; set; }
@@ -30,7 +31,7 @@ public class StagingRow
     public StagingRowStatus Status { get; set; } = StagingRowStatus.Pending;
 
     /// <summary>Isleme sonucu olusan satis kaydi; hatali satirlarda null kalir.</summary>
-    public long? SaleRecordId { get; set; }
+    public Guid? SaleRecordId { get; set; }
 
     public DateTime ReceivedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? ProcessedAtUtc { get; set; }

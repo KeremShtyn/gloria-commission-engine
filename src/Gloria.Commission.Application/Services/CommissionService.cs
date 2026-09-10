@@ -56,7 +56,7 @@ public sealed class CommissionService : ICommissionService
         var period = await GetOrCreatePeriodAsync(year, month, ct);
         var (from, to) = PeriodBounds(year, month);
 
-        var sales = await _sales.FindByEmployeeAndPeriodAsync(employeeNo, from, to, ct);
+        var sales = await _sales.FindByEmployeeAndPeriodAsync(employee.Id, from, to, ct);
         var rules = await _rules.FindEffectiveAsync(from, to, ct);
 
         var calculation = _calculator.Calculate(employee, sales, rules);
@@ -85,14 +85,14 @@ public sealed class CommissionService : ICommissionService
         var sales = await _sales.FindByPeriodAsync(from, to, ct);
 
         var salesByEmployee = sales
-            .GroupBy(s => s.EmployeeNo)
+            .GroupBy(s => s.EmployeeId)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<SaleRecord>)g.ToList());
 
         var rows = new List<EmployeeCommissionResponse>();
 
         foreach (var employee in employees)
         {
-            var employeeSales = salesByEmployee.TryGetValue(employee.EmployeeNo, out var list)
+            var employeeSales = salesByEmployee.TryGetValue(employee.Id, out var list)
                 ? list
                 : Array.Empty<SaleRecord>();
 
@@ -103,10 +103,11 @@ public sealed class CommissionService : ICommissionService
 
             rows.Add(new EmployeeCommissionResponse
             {
+                EmployeeId = employee.Id,
                 EmployeeNo = employee.EmployeeNo,
                 FullName = employee.FullName,
                 Department = employee.Department.Code,
-                Hotel = employee.Hotel,
+                Hotel = employee.Hotel.Code,
                 TotalSalesBase = calculation.TotalSalesBase,
                 TotalCommission = calculation.TotalCommission
             });

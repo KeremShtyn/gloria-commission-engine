@@ -1,28 +1,30 @@
+using Gloria.Commission.Domain.Common;
+
 namespace Gloria.Commission.Domain.Entities;
 
 public class Employee
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = SequentialGuid.New();
 
-    /// <summary>Personel numarası (P1001). Kaynak sistemlerin tamamında bu alan kullanılır.</summary>
+    /// <summary>Personel numarasi (P1001). Kaynak sistemlerin tamaminda bu alan kullanilir.</summary>
     public string EmployeeNo { get; set; } = null!;
 
     public string FullName { get; set; } = null!;
 
-    public int DepartmentId { get; set; }
+    public Guid DepartmentId { get; set; }
     public Department Department { get; set; } = null!;
 
-    /// <summary>Otel kodu: GSR / GGR / GVR.</summary>
-    public string Hotel { get; set; } = null!;
+    public Guid HotelId { get; set; }
+    public Hotel Hotel { get; set; } = null!;
 
     public DateOnly HireDate { get; set; }
 
-    /// <summary>Ayrılış tarihi. Null ise personel aktiftir.</summary>
+    /// <summary>Ayrilis tarihi. Null ise personel aktiftir.</summary>
     public DateOnly? TerminationDate { get; set; }
 
     public ICollection<SaleRecord> Sales { get; set; } = new List<SaleRecord>();
 
-    /// <summary>Satış tarihinde personel istihdamda mıydı?</summary>
+    /// <summary>Satis tarihinde personel istihdamda miydi?</summary>
     public bool IsEmployedOn(DateOnly date) =>
         date >= HireDate && (TerminationDate is null || date <= TerminationDate);
 }

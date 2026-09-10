@@ -13,20 +13,20 @@ public class RuleMatchingTests
     public void Bos_scope_alani_hepsi_anlamina_gelir()
     {
         var rule = TestData.PercentageRule(0.05m);
-        rule.ProductGroup = null;
+        rule.ProductGroupId = null;
 
-        var sale = TestData.Sale(1, 1_000m, productGroup: "BUGGY");
+        var sale = TestData.Sale(1, 1_000m, Guid.Parse("88888888-8888-8888-8888-888888888888"));
 
-        RuleMatcher.Matches(rule, sale, "SPA").Should().BeTrue();
+        RuleMatcher.Matches(rule, sale, TestData.Employee()).Should().BeTrue();
     }
 
     [Fact]
     public void Urun_grubu_uyusmazsa_kural_eslesmez()
     {
-        var rule = TestData.PercentageRule(0.05m, productGroup: "SPA");
-        var sale = TestData.Sale(1, 1_000m, productGroup: "BUGGY");
+        var rule = TestData.PercentageRule(0.05m, TestData.SpaGroupId);
+        var sale = TestData.Sale(1, 1_000m, Guid.Parse("88888888-8888-8888-8888-888888888888"));
 
-        RuleMatcher.Matches(rule, sale, "SPA").Should().BeFalse();
+        RuleMatcher.Matches(rule, sale, TestData.Employee()).Should().BeFalse();
     }
 
     [Fact]
@@ -37,50 +37,50 @@ public class RuleMatchingTests
 
         var sale = TestData.Sale(1, 1_000m, day: 5);
 
-        RuleMatcher.Matches(rule, sale, "SPA").Should().BeFalse();
+        RuleMatcher.Matches(rule, sale, TestData.Employee()).Should().BeFalse();
     }
 
     [Fact]
     public void Yuksek_oncelikli_kural_kazanir()
     {
         var general = TestData.PercentageRule(0.05m);
-        general.Id = 1;
+        general.Id = Guid.Parse("aaaaaaaa-0000-0000-0000-00000000000a");
         general.Priority = 1;
 
         var campaign = TestData.PercentageRule(0.12m);
-        campaign.Id = 2;
+        campaign.Id = Guid.Parse("aaaaaaaa-0000-0000-0000-00000000000b");
         campaign.Code = "PCT-CAMPAIGN";
         campaign.Priority = 50;
 
         var sale = TestData.Sale(1, 1_000m);
 
-        RuleMatcher.Resolve([general, campaign], sale, "SPA")!.Code.Should().Be("PCT-CAMPAIGN");
+        RuleMatcher.Resolve([general, campaign], sale, TestData.Employee())!.Code.Should().Be("PCT-CAMPAIGN");
     }
 
     [Fact]
     public void Oncelik_esitse_daha_spesifik_kural_kazanir()
     {
         var byGroup = TestData.PercentageRule(0.05m);
-        byGroup.Id = 1;
+        byGroup.Id = Guid.Parse("aaaaaaaa-0000-0000-0000-00000000000c");
 
         var byProduct = TestData.PercentageRule(0.09m);
-        byProduct.Id = 2;
+        byProduct.Id = Guid.Parse("aaaaaaaa-0000-0000-0000-00000000000d");
         byProduct.Code = "PCT-PRODUCT";
         byProduct.ProductCode = "SPA_MSJ60";
 
         var sale = TestData.Sale(1, 1_000m, productCode: "SPA_MSJ60");
 
-        RuleMatcher.Resolve([byGroup, byProduct], sale, "SPA")!.Code.Should().Be("PCT-PRODUCT");
+        RuleMatcher.Resolve([byGroup, byProduct], sale, TestData.Employee())!.Code.Should().Be("PCT-PRODUCT");
     }
 
     [Fact]
     public void Kurali_olmayan_satis_sessizce_yutulmaz()
     {
         // Golf dersi: katalogda var, kurali yok.
-        var sales = new List<SaleRecord> { TestData.Sale(1, 3_500m, "GOLF", "GLF_LSN") };
+        var sales = new List<SaleRecord> { TestData.Sale(1, 3_500m, TestData.GolfGroupId, "GLF_LSN") };
 
         var result = TestData.Calculator().Calculate(
-            TestData.Employee("ÖN BÜRO"), sales, [TestData.PercentageRule(0.06m)]);
+            TestData.Employee(TestData.FoodDepartmentId), sales, [TestData.PercentageRule(0.06m)]);
 
         result.TotalCommission.Should().Be(0m);
         result.ExcludedSales.Should().ContainSingle()
@@ -90,23 +90,23 @@ public class RuleMatchingTests
     [Fact]
     public void Yeni_kural_eklemek_kod_degisikligi_gerektirmez()
     {
-        var sales = new List<SaleRecord> { TestData.Sale(1, 3_500m, "GOLF", "GLF_LSN") };
+        var sales = new List<SaleRecord> { TestData.Sale(1, 3_500m, TestData.GolfGroupId, "GLF_LSN") };
 
         // Kural yalnizca veri: veritabanina bir satir eklemekle esdeger.
         var golfRule = new CommissionRule
         {
-            Id = 42,
+            Id = Guid.Parse("aaaaaaaa-0000-0000-0000-00000000002a"),
             Code = "GOLF-PCT",
             Name = "Golf dersi satisi",
             RuleType = CommissionRuleType.Percentage,
-            ProductGroup = "GOLF",
+            ProductGroupId = TestData.GolfGroupId,
             Rate = 0.08m,
             EffectiveFrom = TestData.Ruleset,
             IsActive = true
         };
 
         var result = TestData.Calculator().Calculate(
-            TestData.Employee("ÖN BÜRO"), sales, [TestData.PercentageRule(0.06m), golfRule]);
+            TestData.Employee(TestData.FoodDepartmentId), sales, [TestData.PercentageRule(0.06m), golfRule]);
 
         result.TotalCommission.Should().Be(280m);
         result.ExcludedSales.Should().BeEmpty();

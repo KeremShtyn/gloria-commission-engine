@@ -14,7 +14,7 @@ public class RefundTests
         var sales = new List<SaleRecord>
         {
             TestData.Sale(1, 10_000m, status: SaleStatus.Reversed, day: 3),
-            TestData.Sale(2, -10_000m, status: SaleStatus.Refund, day: 5, reversedSaleId: 1)
+            TestData.Sale(2, -10_000m, status: SaleStatus.Refund, day: 5, reversedSaleId: Guid.Parse("00000000-0000-0000-0000-000000000001"))
         };
 
         var result = TestData.Calculator().Calculate(
@@ -33,7 +33,7 @@ public class RefundTests
         {
             TestData.Sale(1, 20_000m, day: 4),
             // Orijinali bu donemde olmayan iade: mahsup cari aya yazilir.
-            TestData.Sale(2, -5_000m, status: SaleStatus.Refund, day: 10, reversedSaleId: 999)
+            TestData.Sale(2, -5_000m, status: SaleStatus.Refund, day: 10, reversedSaleId: Guid.Parse("00000000-0000-0000-0000-000000000999"))
         };
 
         var result = TestData.Calculator().Calculate(
@@ -64,12 +64,12 @@ public class RefundTests
     {
         var sales = new List<SaleRecord>
         {
-            TestData.Sale(1, 62_000m, "ALC", day: 4),
-            TestData.Sale(2, -5_000m, "ALC", status: SaleStatus.Refund, day: 20)
+            TestData.Sale(1, 62_000m, TestData.AlcGroupId, day: 4),
+            TestData.Sale(2, -5_000m, TestData.AlcGroupId, status: SaleStatus.Refund, day: 20)
         };
 
         var result = TestData.Calculator().Calculate(
-            TestData.Employee("F&B"), sales, [TestData.TieredRule()]);
+            TestData.Employee(TestData.FoodDepartmentId), sales, [TestData.TieredRule()]);
 
         // Net ciro 57.000 -> 3. kademe (%7) degil 2. kademe (%5)
         result.TotalCommission.Should().Be(2_850m);

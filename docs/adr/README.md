@@ -10,3 +10,4 @@ Mimari kararların gerekçeleri. Her dosya bir karar; kısa tutuluyor.
 | [004](004-kural-motoru.md) | Kural veri, kural tipi kod |
 | [005](005-veri-kalitesi.md) | Tarihte katı, tutarda toleranslı ayrıştırma |
 | [006](006-denetim-ve-donem-kilidi.md) | Denetim kaydı ve dönem kilidi veri erişim katmanında |
+| [007](007-referans-veri-yabanci-anahtar.md) | Kural kapsamı serbest metin değil, yabancı anahtar |

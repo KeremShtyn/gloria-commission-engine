@@ -1,3 +1,4 @@
+using Gloria.Commission.Domain.Common;
 using Gloria.Commission.Domain.Enums;
 
 namespace Gloria.Commission.Domain.Entities;
@@ -8,7 +9,7 @@ namespace Gloria.Commission.Domain.Entities;
 /// </summary>
 public class AuditLog
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; } = SequentialGuid.New();
 
     public string EntityName { get; set; } = null!;
     public string EntityId { get; set; } = null!;

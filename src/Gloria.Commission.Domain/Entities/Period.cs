@@ -1,3 +1,4 @@
+using Gloria.Commission.Domain.Common;
 using Gloria.Commission.Domain.Enums;
 
 namespace Gloria.Commission.Domain.Entities;
@@ -7,7 +8,7 @@ namespace Gloria.Commission.Domain.Entities;
 /// </summary>
 public class Period
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = SequentialGuid.New();
 
     public int Year { get; set; }
     public int Month { get; set; }

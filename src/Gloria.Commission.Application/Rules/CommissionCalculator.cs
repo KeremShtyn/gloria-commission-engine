@@ -19,10 +19,8 @@ public sealed class CommissionCalculator : ICommissionCalculator
         IReadOnlyList<SaleRecord> sales,
         IReadOnlyList<CommissionRule> rules)
     {
-        var departmentCode = employee.Department?.Code ?? string.Empty;
-
         var excluded = new List<ExcludedSale>();
-        var byRule = new Dictionary<int, (CommissionRule Rule, List<SaleRecord> Sales)>();
+        var byRule = new Dictionary<Guid, (CommissionRule Rule, List<SaleRecord> Sales)>();
 
         // İptal edilmiş satış ile onu iptal eden iade birbirini götürür; ikisi de tabana girmez.
         // Yalnızca iadesi bu dönemde eşleşememiş kayıtlar negatif tutarla düşülür
@@ -54,7 +52,7 @@ public sealed class CommissionCalculator : ICommissionCalculator
                 continue;
             }
 
-            var rule = RuleMatcher.Resolve(rules, sale, departmentCode);
+            var rule = RuleMatcher.Resolve(rules, sale, employee);
             if (rule is null)
             {
                 excluded.Add(Exclude(sale, "NO_MATCHING_RULE",

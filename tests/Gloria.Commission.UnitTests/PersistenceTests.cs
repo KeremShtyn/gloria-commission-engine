@@ -123,11 +123,29 @@ public class PersistenceTests : IDisposable
             .Which.Code.Should().Be("PERIOD_CLOSED");
     }
 
+    private static readonly Guid TestBatchId = Guid.Parse("11111111-0000-0000-0000-000000000001");
+    private static readonly Guid TestEmployeeId = Guid.Parse("11111111-0000-0000-0000-000000000002");
+    private static readonly Guid TestProductGroupId = Guid.Parse("11111111-0000-0000-0000-000000000003");
+    private static readonly Guid TestDepartmentId = Guid.Parse("11111111-0000-0000-0000-000000000004");
+    private static readonly Guid TestHotelId = Guid.Parse("11111111-0000-0000-0000-000000000005");
+
     private static void Seed(CommissionDbContext db)
     {
+        db.Departments.Add(new Department { Id = TestDepartmentId, Code = "SPA", Name = "SPA" });
+        db.Hotels.Add(new Hotel { Id = TestHotelId, Code = "GSR", Name = "Gloria Serenity Resort" });
+        db.ProductGroups.Add(new ProductGroup { Id = TestProductGroupId, Code = "SPA", Name = "SPA" });
+        db.Employees.Add(new Employee
+        {
+            Id = TestEmployeeId,
+            EmployeeNo = "P1001",
+            FullName = "Test Personel",
+            DepartmentId = TestDepartmentId,
+            HotelId = TestHotelId,
+            HireDate = new DateOnly(2024, 1, 1)
+        });
         db.ImportBatches.Add(new ImportBatch
         {
-            Id = 1,
+            Id = TestBatchId,
             SourceSystem = SourceSystem.Pms,
             FileName = "test.csv",
             FileHash = "hash"
@@ -141,15 +159,16 @@ public class PersistenceTests : IDisposable
         SourceDocumentNo = $"DOC{date:yyyyMMdd}",
         SourceHash = $"hash{date:yyyyMMdd}",
         TransactionDate = date,
-        EmployeeNo = "P1001",
+        SourceEmployeeNo = "P1001",
+        EmployeeId = TestEmployeeId,
         ProductCode = "SPA_MSJ60",
         ProductName = "SPA Masaj 60dk",
-        ProductGroup = "SPA",
+        ProductGroupId = TestProductGroupId,
         Quantity = 1,
         Amount = 2800m,
         AmountTry = 2800m,
         Currency = "TRY",
-        ImportBatchId = 1
+        ImportBatchId = TestBatchId
     };
 
     private sealed class FakeCurrentUser : ICurrentUser
