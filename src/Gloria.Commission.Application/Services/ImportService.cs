@@ -1,41 +1,50 @@
 using Gloria.Commission.Application.Abstractions;
+using Gloria.Commission.Application.Dtos.Responses;
+using Gloria.Commission.Application.Import;
+using Gloria.Commission.Application.Mappers;
+using Gloria.Commission.Application.Repositories;
 using Gloria.Commission.Domain.Common;
 using Gloria.Commission.Domain.Entities;
 using Gloria.Commission.Domain.Enums;
-using Gloria.Commission.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
-namespace Gloria.Commission.Infrastructure.Import;
-
-public interface IImportService
-{
-    Task<ImportSummary> ImportAsync(
-        SourceSystem source, string fileName, string content, CancellationToken ct = default);
-}
+namespace Gloria.Commission.Application.Services;
 
 /// <summary>
 /// CSV yuklemesini uctan uca yurutur: ayristirma, mukerrer eleme, hatali satir loglama,
-/// iade eslestirme. Hatali satirlar dosyayi reddettirmez; ayri tabloda birikir.
+/// iade eslestirme. Ayristirma isi kaynak sisteme ozgu oldugu icin
+/// <see cref="ISourceImporter"/> implementasyonlarina devredilir.
 /// </summary>
 public sealed class ImportService : IImportService
 {
-    private readonly CommissionDbContext _db;
     private readonly IReadOnlyDictionary<SourceSystem, ISourceImporter> _importers;
+    private readonly IEmployeeRepository _employees;
+    private readonly ISaleRecordRepository _sales;
+    private readonly IImportRepository _imports;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _currentUser;
 
     public ImportService(
-        CommissionDbContext db,
         IEnumerable<ISourceImporter> importers,
+        IEmployeeRepository employees,
+        ISaleRecordRepository sales,
+        IImportRepository imports,
+        IUnitOfWork unitOfWork,
         ICurrentUser currentUser)
     {
-        _db = db;
         _importers = importers.ToDictionary(i => i.SourceSystem);
+        _employees = employees;
+        _sales = sales;
+        _imports = imports;
+        _unitOfWork = unitOfWork;
         _currentUser = currentUser;
     }
 
     public async Task<ImportSummary> ImportAsync(
         SourceSystem source, string fileName, string content, CancellationToken ct = default)
     {
+        if (!_currentUser.CanSeeAllEmployees)
+            throw new DomainException("FORBIDDEN", "Veri aktarimi icin Admin veya Muhasebe rolu gerekir.");
+
         if (!_importers.TryGetValue(source, out var importer))
             throw new DomainException("SOURCE_UNSUPPORTED", $"'{source}' kaynak sistemi icin ayristirici yok.");
 
@@ -43,32 +52,23 @@ public sealed class ImportService : IImportService
         {
             SourceSystem = source,
             FileName = fileName,
-            FileHash = CsvReaderHelper.FileHash(content),
+            FileHash = ContentHash.Of(content),
             ImportedBy = _currentUser.UserId
         };
 
-        _db.ImportBatches.Add(batch);
-        await _db.SaveChangesAsync(ct);
+        _imports.AddBatch(batch);
+        await _unitOfWork.SaveChangesAsync(ct);
 
-        var employees = await _db.Employees
-            .ToDictionaryAsync(e => e.EmployeeNo, e => e.Id, ct);
+        var employeeIds = await _employees.GetIdsByEmployeeNoAsync(ct);
+        var knownEmployees = employeeIds.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var knownEmployees = employees.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var rows = importer.Parse(content, knownEmployees);
-
         var failures = rows.Where(r => !r.IsValid).ToList();
-        var candidates = rows.Where(r => r.IsValid).ToList();
 
-        var (accepted, duplicatesInFile) = DeduplicateWithinFile(candidates);
+        var (accepted, duplicatesInFile) = DeduplicateWithinFile(rows.Where(r => r.IsValid).ToList());
 
-        var incomingHashes = accepted.Select(r => r.Sale!.SourceHash).ToList();
-        var existingHashes = await _db.SaleRecords
-            .Where(s => incomingHashes.Contains(s.SourceHash))
-            .Select(s => s.SourceHash)
-            .ToListAsync(ct);
-
-        var existing = existingHashes.ToHashSet();
-        var duplicatesInDb = accepted.Count(r => existing.Contains(r.Sale!.SourceHash));
+        var existing = await _sales.FindExistingHashesAsync(
+            accepted.Select(r => r.Sale!.SourceHash).ToList(), ct);
 
         var toInsert = new List<SaleRecord>();
 
@@ -78,13 +78,13 @@ public sealed class ImportService : IImportService
             if (existing.Contains(sale.SourceHash)) continue;
 
             sale.ImportBatchId = batch.Id;
-            sale.EmployeeId = employees.TryGetValue(sale.EmployeeNo, out var id) ? id : null;
+            sale.EmployeeId = employeeIds.TryGetValue(sale.EmployeeNo, out var id) ? id : null;
             toInsert.Add(sale);
         }
 
-        _db.SaleRecords.AddRange(toInsert);
+        _sales.AddRange(toInsert);
 
-        _db.ImportErrors.AddRange(failures.Select(f => new ImportError
+        _imports.AddErrors(failures.Select(f => new ImportError
         {
             ImportBatchId = batch.Id,
             RowNumber = f.RowNumber,
@@ -93,17 +93,17 @@ public sealed class ImportService : IImportService
             ErrorMessage = Truncate(f.ErrorMessage!, 500)
         }));
 
-        await _db.SaveChangesAsync(ct);
+        await _unitOfWork.SaveChangesAsync(ct);
 
         var matchedReversals = await MatchReversalsAsync(toInsert, ct);
 
         batch.TotalRows = rows.Count;
         batch.ImportedRows = toInsert.Count;
-        batch.DuplicateRows = duplicatesInFile + duplicatesInDb;
+        batch.DuplicateRows = duplicatesInFile + accepted.Count(r => existing.Contains(r.Sale!.SourceHash));
         batch.FailedRows = failures.Count;
         batch.CompletedAtUtc = DateTime.UtcNow;
 
-        await _db.SaveChangesAsync(ct);
+        await _unitOfWork.SaveChangesAsync(ct);
 
         return new ImportSummary
         {
@@ -125,6 +125,19 @@ public sealed class ImportService : IImportService
         };
     }
 
+    public async Task<IReadOnlyList<ImportBatchResponse>> GetBatchesAsync(CancellationToken ct = default)
+    {
+        var batches = await _imports.FindBatchesAsync(ct);
+        return batches.Select(ImportMapper.ToResponse).ToList();
+    }
+
+    public async Task<IReadOnlyList<ImportErrorResponse>> GetErrorsAsync(
+        int batchId, CancellationToken ct = default)
+    {
+        var errors = await _imports.FindErrorsByBatchAsync(batchId, ct);
+        return errors.Select(ImportMapper.ToResponse).ToList();
+    }
+
     /// <summary>
     /// Ayni dosyada ayni belge numarasi birden fazla kez gelebiliyor.
     /// Muhasebelesmis (POSTED) satir muhasebelesmemise tercih edilir; kalanlar mukerrer sayilir.
@@ -137,12 +150,11 @@ public sealed class ImportService : IImportService
 
         foreach (var group in candidates.GroupBy(r => r.Sale!.SourceHash))
         {
-            var preferred = group
+            accepted.Add(group
                 .OrderBy(r => r.Sale!.Status == SaleStatus.Unposted ? 1 : 0)
                 .ThenBy(r => r.RowNumber)
-                .First();
+                .First());
 
-            accepted.Add(preferred);
             duplicates += group.Count() - 1;
         }
 
@@ -151,8 +163,6 @@ public sealed class ImportService : IImportService
 
     /// <summary>
     /// Iade kayitlarini iptal ettikleri satisla eslestirir ve orijinali Reversed olarak isaretler.
-    /// ERP'de referans alani vardir; PMS/POS'ta yoktur, bu yuzden
-    /// (personel + urun + mutlak tutar + tarih onceligi) ile en yakin aday secilir.
     /// Eslesme bulunamazsa iade yine de prim tabanindan dusulur — sadece baglanti kurulamamis olur.
     /// </summary>
     private async Task<int> MatchReversalsAsync(List<SaleRecord> inserted, CancellationToken ct)
@@ -164,31 +174,7 @@ public sealed class ImportService : IImportService
 
         foreach (var refund in refunds)
         {
-            SaleRecord? original = null;
-
-            if (!string.IsNullOrWhiteSpace(refund.SourceReference))
-            {
-                original = await _db.SaleRecords.FirstOrDefaultAsync(
-                    s => s.SourceSystem == refund.SourceSystem
-                         && s.SourceDocumentNo == refund.SourceReference
-                         && s.Status == SaleStatus.Normal, ct);
-            }
-
-            if (original is null)
-            {
-                var target = Math.Abs(refund.AmountTry);
-
-                original = await _db.SaleRecords
-                    .Where(s => s.SourceSystem == refund.SourceSystem
-                                && s.EmployeeNo == refund.EmployeeNo
-                                && s.ProductCode == refund.ProductCode
-                                && s.Status == SaleStatus.Normal
-                                && s.TransactionDate <= refund.TransactionDate
-                                && s.AmountTry == target)
-                    .OrderByDescending(s => s.TransactionDate)
-                    .FirstOrDefaultAsync(ct);
-            }
-
+            var original = await _sales.FindOriginalForRefundAsync(refund, ct);
             if (original is null) continue;
 
             refund.ReversedSaleId = original.Id;
@@ -196,7 +182,7 @@ public sealed class ImportService : IImportService
             matched++;
         }
 
-        if (matched > 0) await _db.SaveChangesAsync(ct);
+        if (matched > 0) await _unitOfWork.SaveChangesAsync(ct);
         return matched;
     }
 

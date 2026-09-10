@@ -1,7 +1,7 @@
-namespace Gloria.Commission.Application.Models;
+namespace Gloria.Commission.Application.Dtos.Responses;
 
-/// <summary>Prim hesabinin API cevabi: sonuc + hesaplama adimlari.</summary>
-public sealed record CommissionResultDto
+/// <summary>Prim hesabinin cevabi: sonuc, hesaplama adimlari ve prim disi kalanlar.</summary>
+public sealed record CommissionResultResponse
 {
     public string Period { get; init; } = string.Empty;
     public bool PeriodClosed { get; init; }
@@ -16,11 +16,11 @@ public sealed record CommissionResultDto
 
     public DateTime CalculatedAtUtc { get; init; }
 
-    public IReadOnlyList<CommissionStepDto> Steps { get; init; } = Array.Empty<CommissionStepDto>();
-    public IReadOnlyList<ExcludedSaleDto> ExcludedSales { get; init; } = Array.Empty<ExcludedSaleDto>();
+    public IReadOnlyList<CommissionStepResponse> Steps { get; init; } = [];
+    public IReadOnlyList<ExcludedSaleResponse> ExcludedSales { get; init; } = [];
 }
 
-public sealed record CommissionStepDto
+public sealed record CommissionStepResponse
 {
     public int Order { get; init; }
 
@@ -42,7 +42,7 @@ public sealed record CommissionStepDto
     public string Explanation { get; init; } = string.Empty;
 }
 
-public sealed record ExcludedSaleDto
+public sealed record ExcludedSaleResponse
 {
     public string SourceSystem { get; init; } = string.Empty;
     public string SourceDocumentNo { get; init; } = string.Empty;
@@ -55,17 +55,17 @@ public sealed record ExcludedSaleDto
 }
 
 /// <summary>Muhasebe ekraninin donem ozeti.</summary>
-public sealed record PeriodSummaryDto
+public sealed record PeriodSummaryResponse
 {
     public string Period { get; init; } = string.Empty;
     public bool Closed { get; init; }
     public int EmployeeCount { get; init; }
     public decimal TotalSalesBase { get; init; }
     public decimal TotalCommission { get; init; }
-    public IReadOnlyList<EmployeeCommissionDto> Employees { get; init; } = Array.Empty<EmployeeCommissionDto>();
+    public IReadOnlyList<EmployeeCommissionResponse> Employees { get; init; } = [];
 }
 
-public sealed record EmployeeCommissionDto
+public sealed record EmployeeCommissionResponse
 {
     public string EmployeeNo { get; init; } = string.Empty;
     public string FullName { get; init; } = string.Empty;

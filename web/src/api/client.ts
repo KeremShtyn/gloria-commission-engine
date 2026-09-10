@@ -1,4 +1,4 @@
-import type { ApiError, CommissionResult, CommissionRule, Employee, RuleRequest, UserRole } from '../types'
+import type { ApiError, CommissionResultResponse, CommissionRuleResponse, EmployeeResponse, CommissionRuleRequest, UserRole } from '../types'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5199'
 
@@ -17,7 +17,7 @@ function headers(session: Session, json = false): HeadersInit {
     'X-User-Id': session.userId,
     'X-User-Role': session.role,
   }
-  if (session.employeeNo) result['X-Employee-No'] = session.employeeNo
+  if (session.employeeNo) result['X-EmployeeResponse-No'] = session.employeeNo
   if (json) result['Content-Type'] = 'application/json'
   return result
 }
@@ -40,22 +40,22 @@ async function handle<T>(response: Response): Promise<T> {
 export const api = {
   listRules: (session: Session) =>
     fetch(`${BASE_URL}/api/v1/commission-rules`, { headers: headers(session) }).then(
-      handle<CommissionRule[]>,
+      handle<CommissionRuleResponse[]>,
     ),
 
-  createRule: (session: Session, body: RuleRequest) =>
+  createRule: (session: Session, body: CommissionRuleRequest) =>
     fetch(`${BASE_URL}/api/v1/commission-rules`, {
       method: 'POST',
       headers: headers(session, true),
       body: JSON.stringify(body),
-    }).then(handle<CommissionRule>),
+    }).then(handle<CommissionRuleResponse>),
 
-  updateRule: (session: Session, id: number, body: RuleRequest) =>
+  updateRule: (session: Session, id: number, body: CommissionRuleRequest) =>
     fetch(`${BASE_URL}/api/v1/commission-rules/${id}`, {
       method: 'PUT',
       headers: headers(session, true),
       body: JSON.stringify(body),
-    }).then(handle<CommissionRule>),
+    }).then(handle<CommissionRuleResponse>),
 
   deactivateRule: (session: Session, id: number) =>
     fetch(`${BASE_URL}/api/v1/commission-rules/${id}`, {
@@ -66,10 +66,10 @@ export const api = {
   commission: (session: Session, year: number, month: number, employeeNo: string) =>
     fetch(`${BASE_URL}/api/v1/commissions/${year}/${month}/employees/${employeeNo}`, {
       headers: headers(session),
-    }).then(handle<CommissionResult>),
+    }).then(handle<CommissionResultResponse>),
 
   employees: (session: Session) =>
-    fetch(`${BASE_URL}/api/v1/employees`, { headers: headers(session) }).then(handle<Employee[]>),
+    fetch(`${BASE_URL}/api/v1/employees`, { headers: headers(session) }).then(handle<EmployeeResponse[]>),
 
   productGroups: (session: Session) =>
     fetch(`${BASE_URL}/api/v1/product-groups`, { headers: headers(session) }).then(handle<string[]>),

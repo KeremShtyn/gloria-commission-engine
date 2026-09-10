@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, formatMoney, formatPercent, type Session } from '../api/client'
-import type { CommissionRule, RuleRequest, RuleTier, RuleType } from '../types'
+import type { CommissionRuleResponse, CommissionRuleRequest, RuleTierResponse, RuleType } from '../types'
 
-const EMPTY: RuleRequest = {
+const EMPTY: CommissionRuleRequest = {
   code: '',
   name: '',
   ruleType: 'Percentage',
@@ -32,9 +32,9 @@ const RULE_TYPE_LABEL: Record<RuleType, string> = {
 const orNull = (value: string) => (value.trim() === '' ? null : value.trim())
 
 export function RulesPage({ session }: { session: Session }) {
-  const [rules, setRules] = useState<CommissionRule[]>([])
+  const [rules, setRules] = useState<CommissionRuleResponse[]>([])
   const [groups, setGroups] = useState<string[]>([])
-  const [form, setForm] = useState<RuleRequest>(EMPTY)
+  const [form, setForm] = useState<CommissionRuleRequest>(EMPTY)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -54,14 +54,14 @@ export function RulesPage({ session }: { session: Session }) {
     void load()
   }, [load])
 
-  const patch = (changes: Partial<RuleRequest>) => setForm((current) => ({ ...current, ...changes }))
+  const patch = (changes: Partial<CommissionRuleRequest>) => setForm((current) => ({ ...current, ...changes }))
 
   const reset = () => {
     setForm(EMPTY)
     setEditingId(null)
   }
 
-  const startEdit = (rule: CommissionRule) => {
+  const startEdit = (rule: CommissionRuleResponse) => {
     setEditingId(rule.id)
     setNotice(null)
     setForm({
@@ -107,7 +107,7 @@ export function RulesPage({ session }: { session: Session }) {
     }
   }
 
-  const deactivate = async (rule: CommissionRule) => {
+  const deactivate = async (rule: CommissionRuleResponse) => {
     setError(null)
     try {
       await api.deactivateRule(session, rule.id)
@@ -118,7 +118,7 @@ export function RulesPage({ session }: { session: Session }) {
     }
   }
 
-  const updateTier = (index: number, changes: Partial<RuleTier>) =>
+  const updateTier = (index: number, changes: Partial<RuleTierResponse>) =>
     patch({ tiers: form.tiers.map((t, i) => (i === index ? { ...t, ...changes } : t)) })
 
   const addTier = () => {
@@ -304,7 +304,7 @@ export function RulesPage({ session }: { session: Session }) {
                 id="tierApplication"
                 value={form.tierApplication}
                 onChange={(e) =>
-                  patch({ tierApplication: e.target.value as RuleRequest['tierApplication'] })
+                  patch({ tierApplication: e.target.value as CommissionRuleRequest['tierApplication'] })
                 }
               >
                 <option value="WholeAmount">Hedef aşılırsa oran tüm ciroya</option>

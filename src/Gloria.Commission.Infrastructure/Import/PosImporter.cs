@@ -1,4 +1,5 @@
 using Gloria.Commission.Application.Abstractions;
+using Gloria.Commission.Application.Import;
 using Gloria.Commission.Domain.Entities;
 using Gloria.Commission.Domain.Enums;
 
@@ -78,7 +79,7 @@ public sealed class PosImporter : ISourceImporter
             {
                 SourceSystem = SourceSystem.Pos,
                 SourceDocumentNo = documentNo,
-                SourceHash = CsvReaderHelper.Hash(nameof(SourceSystem.Pos), documentNo),
+                SourceHash = ContentHash.ForDocument(nameof(SourceSystem.Pos), documentNo),
                 TransactionDate = date,
                 EmployeeNo = employeeNo,
                 ProductCode = $"{outlet}-{plu}",

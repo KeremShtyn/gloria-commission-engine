@@ -1,7 +1,7 @@
 using Gloria.Commission.Domain.Entities;
 using Gloria.Commission.Domain.Enums;
 
-namespace Gloria.Commission.Infrastructure.Import;
+namespace Gloria.Commission.Application.Import;
 
 /// <summary>Tek bir CSV satirinin ayristirma sonucu.</summary>
 public sealed record RowParseResult

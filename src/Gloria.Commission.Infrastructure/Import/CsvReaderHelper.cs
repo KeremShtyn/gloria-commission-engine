@@ -1,6 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
-
 namespace Gloria.Commission.Infrastructure.Import;
 
 internal static class CsvReaderHelper
@@ -25,20 +22,4 @@ internal static class CsvReaderHelper
 
     public static string? Cell(string[] cells, int index)
         => index < cells.Length ? CsvValueParser.Trimmed(cells[index]) : null;
-
-    /// <summary>
-    /// Mukerrer kayit anahtari. Kaynak sistemdeki belge numarasi dogal anahtardir;
-    /// ayni belge ikinci kez gelirse (ayni dosya tekrar yuklense de) yazilmaz.
-    /// </summary>
-    public static string Hash(string sourceSystem, string documentNo)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes($"{sourceSystem}|{documentNo}"));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
-    }
-
-    public static string FileHash(string content)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(content));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
-    }
 }

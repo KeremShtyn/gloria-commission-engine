@@ -111,16 +111,33 @@ Ayrıntısı [docs/adr](docs/adr) altında, özeti:
 
 ## Yapı
 
+Katmanlı mimari. İstek şu sırayla ilerler:
+
 ```
-src/
-  Gloria.Commission.Domain           entity'ler, enum'lar
-  Gloria.Commission.Application      kural motoru (veritabanından bağımsız), DTO'lar
-  Gloria.Commission.Infrastructure   EF Core, CSV aktarımı, servisler
-  Gloria.Commission.Api              endpoint'ler, rol okuma, hata formatı
-tests/                               kural motoru birim testleri
-web/                                 React (Vite)
-sample-data/                         verilen CSV'ler
+Controller  →  Service  →  Repository  →  Entity
+     ↑            ↓
+    DTO         Domain
 ```
 
-Kural motoru saf: veritabanına dokunmaz, verilen girdilerden deterministik çıktı üretir.
-Testlerin hızlı ve hesabın yeniden üretilebilir olmasının sebebi bu.
+```
+src/
+  Gloria.Commission.Api               Controllers, rol okuma, hata formatı
+  Gloria.Commission.Application       Services, Repositories (arayüz), Dtos, Mappers, Rules
+  Gloria.Commission.Infrastructure    Repositories (EF Core), Persistence, Import
+  Gloria.Commission.Domain            Entities, Enums
+tests/                                birim testleri
+web/                                  React (Vite)
+sample-data/                          verilen CSV'ler
+```
+
+Kurallar:
+
+- **Controller** yalnızca HTTP işi yapar: bağlama, doğrulama, durum kodu. İş mantığı yok.
+- **Service** iş mantığını taşır, yetkiyi denetler, DTO ↔ Entity dönüşümünü `Mappers` üzerinden yapar.
+- **Repository** veri erişimini kapsar. Arayüzü Application'da, EF Core implementasyonu
+  Infrastructure'da — servis katmanı ORM'i bilmez.
+- **Kural motoru** saf: veritabanına dokunmaz, verilen girdilerden deterministik çıktı üretir.
+  Testlerin hızlı ve hesabın yeniden üretilebilir olmasının sebebi bu.
+
+Yazma işlemleri `IUnitOfWork` ile kalıcılaşır; böylece bir servis metodu birden fazla tabloya
+tek işlemde yazabilir (aktarım: parti + satışlar + hatalı satırlar).

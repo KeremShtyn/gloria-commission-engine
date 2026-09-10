@@ -1,10 +1,10 @@
 using System.Text.Json.Serialization;
-using Gloria.Commission.Api.Endpoints;
 using Gloria.Commission.Api.Middleware;
 using Gloria.Commission.Api.Security;
 using Gloria.Commission.Application.Abstractions;
 using Gloria.Commission.Infrastructure;
 using Gloria.Commission.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,13 +17,20 @@ builder.Services.AddCommissionInfrastructure(connectionString);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HeaderCurrentUser>();
 
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 
-    // Enum'lar sayi degil isim olarak tasinir: "Percentage", "Pms".
-    // Hem cevaplar okunabilir olur hem de istemci sayi eslesmelerini bilmek zorunda kalmaz.
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        // Enum'lar sayi degil isim olarak tasinir: "Percentage", "Pms".
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
+// Model dogrulama hatalari da diger hatalarla ayni bicimde donsun.
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = ValidationProblemFactory.Create;
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -79,15 +86,8 @@ using (var scope = app.Services.CreateScope())
     await DbSeeder.SeedAsync(db, ResolvePersonnelSeedPath(app));
 }
 
-
-app.MapRuleEndpoints();
-app.MapCommissionEndpoints();
-app.MapImportEndpoints();
-app.MapPeriodEndpoints();
-app.MapReferenceEndpoints();
-
+app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" })).ExcludeFromDescription();
-
 
 // Seed dosyasi gelistirmede repo kokunde, konteynerde uygulama klasorunde bulunur.
 static string? ResolvePersonnelSeedPath(WebApplication app)

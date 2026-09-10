@@ -1,4 +1,5 @@
 using Gloria.Commission.Application.Abstractions;
+using Gloria.Commission.Application.Import;
 using Gloria.Commission.Domain.Entities;
 using Gloria.Commission.Domain.Enums;
 
@@ -92,7 +93,7 @@ public sealed class ErpImporter : ISourceImporter
             {
                 SourceSystem = SourceSystem.Erp,
                 SourceDocumentNo = documentNo,
-                SourceHash = CsvReaderHelper.Hash(nameof(SourceSystem.Erp), documentNo),
+                SourceHash = ContentHash.ForDocument(nameof(SourceSystem.Erp), documentNo),
                 TransactionDate = date,
                 EmployeeNo = employeeNo,
                 ProductCode = ProductCatalog.CodeFromErpDescription(description),

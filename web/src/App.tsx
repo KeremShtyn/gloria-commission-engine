@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { api, type Session } from './api/client'
 import { CommissionPage } from './pages/CommissionPage'
 import { RulesPage } from './pages/RulesPage'
-import type { Employee, UserRole } from './types'
+import type { EmployeeResponse, UserRole } from './types'
 
 const ROLE_LABEL: Record<UserRole, string> = {
   Admin: 'Admin (kuralları yönetir)',
   Accounting: 'Muhasebe (tüm personeli görür)',
-  Employee: 'Personel (yalnızca kendini görür)',
+  EmployeeResponse: 'Personel (yalnızca kendini görür)',
 }
 
 type Tab = 'rules' | 'commission'
@@ -16,13 +16,13 @@ export default function App() {
   const [role, setRole] = useState<UserRole>('Admin')
   const [userId, setUserId] = useState('kerem')
   const [employeeNo, setEmployeeNo] = useState('P1001')
-  const [employees, setEmployees] = useState<Employee[]>([])
+  const [employees, setEmployees] = useState<EmployeeResponse[]>([])
   const [tab, setTab] = useState<Tab>('rules')
 
   const session: Session = {
     userId,
     role,
-    employeeNo: role === 'Employee' ? employeeNo : null,
+    employeeNo: role === 'EmployeeResponse' ? employeeNo : null,
   }
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function App() {
             ))}
           </select>
         </div>
-        {role === 'Employee' && (
+        {role === 'EmployeeResponse' && (
           <div style={{ minWidth: 220 }}>
             <label htmlFor="employeeNo">Personel</label>
             <select

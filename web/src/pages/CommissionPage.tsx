@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, formatMoney, formatPercent, type Session } from '../api/client'
-import type { CommissionResult } from '../types'
+import type { CommissionResultResponse } from '../types'
 
 const REASON_LABEL: Record<string, string> = {
   NO_MATCHING_RULE: 'Kural tanımlı değil',
@@ -13,12 +13,12 @@ export function CommissionPage({ session }: { session: Session }) {
   const [year, setYear] = useState(2026)
   const [month, setMonth] = useState(8)
   const [employeeNo, setEmployeeNo] = useState(session.employeeNo ?? 'P1001')
-  const [result, setResult] = useState<CommissionResult | null>(null)
+  const [result, setResult] = useState<CommissionResultResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   // Personel rolunde baska bir personel sorgulanamaz; kutu kendi numarasina sabitlenir.
-  const locked = session.role === 'Employee'
+  const locked = session.role === 'EmployeeResponse'
 
   useEffect(() => {
     if (locked && session.employeeNo) setEmployeeNo(session.employeeNo)

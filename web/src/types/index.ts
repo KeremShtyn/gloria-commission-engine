@@ -1,15 +1,15 @@
-export type UserRole = 'Admin' | 'Accounting' | 'Employee'
+export type UserRole = 'Admin' | 'Accounting' | 'EmployeeResponse'
 
 export type RuleType = 'Percentage' | 'Tiered' | 'FixedAmount'
 
-export interface RuleTier {
+export interface RuleTierResponse {
   id?: number
   minAmount: number
   maxAmount: number | null
   rate: number
 }
 
-export interface CommissionRule {
+export interface CommissionRuleResponse {
   id: number
   code: string
   name: string
@@ -27,12 +27,12 @@ export interface CommissionRule {
   effectiveFrom: string
   effectiveTo: string | null
   isActive: boolean
-  tiers: RuleTier[]
+  tiers: RuleTierResponse[]
 }
 
-export type RuleRequest = Omit<CommissionRule, 'id' | 'tiers'> & { tiers: RuleTier[] }
+export type CommissionRuleRequest = Omit<CommissionRuleResponse, 'id' | 'tiers'> & { tiers: RuleTierResponse[] }
 
-export interface CommissionStep {
+export interface CommissionStepResponse {
   order: number
   ruleCode: string
   ruleName: string
@@ -49,7 +49,7 @@ export interface CommissionStep {
   explanation: string
 }
 
-export interface ExcludedSale {
+export interface ExcludedSaleResponse {
   sourceSystem: string
   sourceDocumentNo: string
   transactionDate: string
@@ -60,7 +60,7 @@ export interface ExcludedSale {
   reason: string
 }
 
-export interface CommissionResult {
+export interface CommissionResultResponse {
   period: string
   periodClosed: boolean
   employeeNo: string
@@ -70,11 +70,11 @@ export interface CommissionResult {
   totalSalesBase: number
   totalCommission: number
   calculatedAtUtc: string
-  steps: CommissionStep[]
-  excludedSales: ExcludedSale[]
+  steps: CommissionStepResponse[]
+  excludedSales: ExcludedSaleResponse[]
 }
 
-export interface Employee {
+export interface EmployeeResponse {
   employeeNo: string
   fullName: string
   department: string
