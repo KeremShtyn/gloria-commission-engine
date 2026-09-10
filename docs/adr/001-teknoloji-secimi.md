@@ -17,7 +17,8 @@ Rastgele GUID'in indeks parçalaması sorununu önlemek için zaman damgası ön
 Dört proje: Domain, Application, Infrastructure, Api. Bağımlılık içeri doğru akar —
 kural motoru Application'da ve EF Core'a bağımlı değil.
 
-Minimal API kullanıldı; endpoint sayısı az ve hepsi ince.
+Controller tabanlı Web API. `[ApiController]` model doğrulamasını otomatik çalıştırıyor;
+minimal API'de `[Range]` gibi attribute'lar sessizce etkisiz kalıyordu.
 
 ## Sonuçlar
 
