@@ -1,12 +1,15 @@
 using System.Text.Json;
+using Gloria.Commission.Api.Logging;
 using Gloria.Commission.Domain.Common;
 
 namespace Gloria.Commission.Api.Middleware;
 
 /// <summary>
 /// Tum hatalari tek bir cevap formatinda dondurur:
-/// { "error": { "code", "message", "timestamp", "path" } }
-/// Is kurali ihlali 422, yetki hatasi 403, bulunamadi 404, digerleri 500.
+/// { "error": { "code", "message", "correlationId", "timestamp", "path" } }
+///
+/// Is kurali ihlali 422, yetki hatasi 403, bulunamadi 404, cakisma 409, digerleri 500.
+/// Beklenmeyen hatalarda ic detay istemciye sizmaz; korelasyon kimligi ile loga baglanir.
 /// </summary>
 public sealed class ErrorHandlingMiddleware
 {
@@ -32,12 +35,12 @@ public sealed class ErrorHandlingMiddleware
         }
         catch (DomainException ex)
         {
-            _logger.LogWarning("Is kurali ihlali {Code}: {Message}", ex.Code, ex.Message);
+            _logger.LogWarning("Is kurali ihlali {ErrorCode}: {ErrorMessage}", ex.Code, ex.Message);
             await WriteAsync(context, StatusFor(ex.Code), ex.Code, ex.Message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Beklenmeyen hata");
+            _logger.LogError(ex, "Beklenmeyen hata: {Path}", context.Request.Path.Value);
             await WriteAsync(context, StatusCodes.Status500InternalServerError,
                 "INTERNAL_ERROR", "Beklenmeyen bir hata olustu.");
         }
@@ -65,6 +68,7 @@ public sealed class ErrorHandlingMiddleware
             {
                 code,
                 message,
+                correlationId = CorrelationIdMiddleware.Of(context),
                 timestamp = DateTime.UtcNow,
                 path = context.Request.Path.Value
             }

@@ -70,6 +70,7 @@ Gerçek kimlik doğrulama yok; rol HTTP header'ından okunuyor.
 | `X-User-Role` | `Admin`, `Accounting` veya `Employee` |
 | `X-User-Id` | Denetim kaydının aktörü |
 | `X-Employee-No` | Rol `Employee` ise personelin kendi numarası |
+| `X-Correlation-Id` | Opsiyonel. Gönderilirse log ve hata cevabında bu kimlik kullanılır |
 
 Admin kuralları yönetir, Muhasebe tüm personelin primini görür, Personel yalnızca kendisininkini.
 Header okunamazsa en dar yetki (`Employee`) uygulanır.
@@ -108,6 +109,9 @@ Ayrıntısı [docs/adr](docs/adr) altında, özeti:
   yanlış aya yazar. `2.500,00` kabul edilir — belirsizlik yok, reddetmek gerçek ciroyu kaybettirir.
 - **Denetim kaydı ve dönem kilidi `SaveChanges` içinde.** Servis katmanında değil; hangi yoldan
   gelinirse gelinsin kural ve satış değişiklikleri loglanır, kapalı dönem korunur.
+- **Audit log veritabanında, uygulama logu stdout'ta.** Audit log iş kaydı, aynı transaction'da
+  yazılır; Elastic'e taşınmaz. Uygulama logu Serilog ile JSON olarak stdout'a düşer, log
+  toplayıcı Elastic'e taşır. Her istek `X-Correlation-Id` taşır.
 
 ## Yapı
 

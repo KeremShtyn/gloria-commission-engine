@@ -93,6 +93,36 @@ Yetki kontrolü servis katmanında; controller'a güvenilmez. Şu an rol HTTP he
 **Para birimi.** Yabancı para satışlar TRY'ye çevrilerek saklanır, kullanılan kur satırda tutulur.
 Kuru bulunamayan satır sessizce 1 kabul edilmez; hatalı satır olarak loglanır.
 
+## Loglama
+
+İki ayrı şey var ve karıştırılmamalı:
+
+| | Audit log | Uygulama logu |
+|---|---|---|
+| Ne | İş kaydı: kim primi değiştirdi | Teknik iz: hangi istek ne kadar sürdü |
+| Nerede | `audit_logs` tablosu, **aynı transaction** | stdout → log toplayıcı |
+| Neden orada | Kayıt başarılıysa log da var. Arada kuyruk olsaydı "değişiklik oldu ama logu kayboldu" mümkün olurdu | Kaybolması tolere edilebilir |
+| Ömür | Kalıcı; itiraz geldiğinde delil | Günlerle sınırlı |
+
+Audit log'u Elastic'e taşımak bu yüzden bir iyileştirme değil, hata olurdu: prim itirazında
+dayanak, silinebilir bir index değil FK bütünlüğü olan bir tablo olmalı.
+
+Uygulama logu Serilog ile yazılır, üretimde satır başına bir compact JSON nesnesi olarak
+**stdout'a** düşer. Uygulama hangi backend'e gittiğini bilmez; Filebeat ya da Fluent Bit
+stdout'u okuyup Elastic'e taşır. Doğrudan Elastic sink kullanılmamasının sebebi bu:
+uygulamanın log altyapısına açılışta bağımlı olmaması, log yazamadığında istek işleyememesi gerekmiyor.
+
+**Korelasyon kimliği.** Her istek `X-Correlation-Id` taşır — istemci gönderirse o kullanılır,
+yoksa üretilir. Kimlik o istek boyunca yazılan her log satırına, cevap başlığına ve hata
+gövdesine gider. Kullanıcı "hata aldım" dediğinde tek kimlikle bütün iz bulunur.
+Log satırlarındaki `UserId` alanı audit log'daki `ChangedBy` ile aynı değerdir; teknik izden
+iş kaydına geçilebilir.
+
+**Uygulama loguna ne yazılmaz.** Prim tutarı, ciro, personel adı. Sadece `employeeNo`,
+kural kodu ve satır sayısı yazılır. Bu sistem maaş etkiliyor; hassas değerlerin log
+toplayıcıda geniş bir kitlenin görebileceği yere düşmesi, audit log'un sağladığı erişim
+kontrolünü anlamsız kılardı.
+
 ## Katmanlar
 
 İstek tek yönde ilerler; bağımlılıklar içeri doğru akar.
@@ -128,7 +158,7 @@ Bu case tek servis olarak teslim edildi. Gerçek kurulumda değişecekler:
 - **Aktarım:** Import endpoint'i senkron. Dosyalar büyüdüğünde kuyruğa alınıp arka planda
   işlenmesi, ilerleme bilgisinin `import_batches` üzerinden okunması gerekir.
 - **Zamanlama:** Gecelik ETL'i tetikleyecek bir job (Hangfire veya harici scheduler).
-- **Gözlemlenebilirlik:** Yapılandırılmış log + korelasyon kimliği; aktarım ve hesaplama
-  sürelerinin metriğe dönmesi.
+- **Gözlemlenebilirlik:** Log toplayıcı (Filebeat → Elastic) ve aktarım/hesaplama sürelerinin
+  metriğe dönmesi. Uygulama tarafı hazır; eksik olan altyapı.
 
 Bunları şimdi eklemek teslim edilen dilimi karmaşıklaştırırdı; sınırı burada çizdim.

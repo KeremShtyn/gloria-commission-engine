@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Gloria.Commission.Api.Logging;
 using Gloria.Commission.Api.Middleware;
 using Gloria.Commission.Api.Security;
 using Gloria.Commission.Application.Abstractions;
@@ -6,8 +7,11 @@ using Gloria.Commission.Infrastructure;
 using Gloria.Commission.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog(LoggingSetup.ConfigureSerilog);
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
                        ?? "Data Source=gloria-commission.db";
@@ -70,10 +74,20 @@ builder.Services.AddCors(options => options.AddPolicy(CorsPolicy, policy => poli
     .WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
                  ?? ["http://localhost:5173"])
     .AllowAnyHeader()
-    .AllowAnyMethod()));
+    .AllowAnyMethod()
+    // Tarayici korelasyon kimligini okuyabilsin; hata bildiriminde kullanilir.
+    .WithExposedHeaders(CorrelationIdMiddleware.HeaderName)));
 
 var app = builder.Build();
 
+// Sira onemli: korelasyon kimligi once uretilir ki istek tamamlanma logu ve
+// hata cevabi da ayni kimligi tasisin.
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = LoggingSetup.EnrichFromRequest;
+    options.GetLevel = LoggingSetup.LevelForRequest;
+});
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseCors(CorsPolicy);
 

@@ -1,3 +1,4 @@
+using Gloria.Commission.Api.Logging;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -30,6 +31,7 @@ public static class ValidationProblemFactory
                 code = "VALIDATION_ERROR",
                 message = "Gonderilen veri gecerli degil.",
                 details,
+                correlationId = CorrelationIdMiddleware.Of(context.HttpContext),
                 timestamp = DateTime.UtcNow,
                 path = context.HttpContext.Request.Path.Value
             }
