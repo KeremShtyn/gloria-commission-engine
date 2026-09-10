@@ -5,6 +5,8 @@ using Gloria.Commission.Api.Security;
 using Gloria.Commission.Application.Abstractions;
 using Gloria.Commission.Infrastructure;
 using Gloria.Commission.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -19,7 +21,18 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 builder.Services.AddCommissionInfrastructure(connectionString);
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUser, HeaderCurrentUser>();
+builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+
+// Kimlik basliktan okunuyor (case gercek kimlik dogrulama istemiyor);
+// yetkilendirme ASP.NET'in kendi altyapisiyla yapiliyor.
+// Uretimde asagidaki satir AddJwtBearer ile degistirilir, gerisi ayni kalir.
+builder.Services
+    .AddAuthentication(AuthenticationHeaders.Scheme)
+    .AddScheme<AuthenticationSchemeOptions, HeaderAuthenticationHandler>(
+        AuthenticationHeaders.Scheme, _ => { });
+
+builder.Services.AddAuthorization(Policies.Register);
+builder.Services.AddSingleton<IAuthorizationHandler, SelfOrPrivilegedHandler>();
 
 builder.Services
     .AddControllers()
@@ -48,10 +61,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 
     // Rol basligi Swagger uzerinden de denenebilsin.
-    options.AddSecurityDefinition(HeaderCurrentUser.RoleHeader, new OpenApiSecurityScheme
+    options.AddSecurityDefinition(AuthenticationHeaders.Role, new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
-        Name = HeaderCurrentUser.RoleHeader,
+        Name = AuthenticationHeaders.Role,
         Type = SecuritySchemeType.ApiKey,
         Description = "Admin | Accounting | Employee"
     });
@@ -63,7 +76,7 @@ builder.Services.AddSwaggerGen(options =>
             Reference = new OpenApiReference
             {
                 Type = ReferenceType.SecurityScheme,
-                Id = HeaderCurrentUser.RoleHeader
+                Id = AuthenticationHeaders.Role
             }
         }] = Array.Empty<string>()
     });
@@ -90,6 +103,9 @@ app.UseSerilogRequestLogging(options =>
 });
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseCors(CorsPolicy);
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseSwagger();
 app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "Gloria Prim Motoru v1"));

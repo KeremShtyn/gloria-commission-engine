@@ -4,11 +4,14 @@ using Gloria.Commission.Application.Import;
 using Gloria.Commission.Application.Services;
 using Gloria.Commission.Domain.Common;
 using Gloria.Commission.Domain.Enums;
+using Gloria.Commission.Api.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gloria.Commission.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = Policies.CanSeeAllEmployees)]
 [Route("api/v1/imports")]
 [Produces("application/json")]
 [Tags("Veri Aktarimi")]

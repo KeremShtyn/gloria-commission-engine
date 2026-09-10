@@ -1,10 +1,13 @@
 using Gloria.Commission.Application.Dtos.Responses;
 using Gloria.Commission.Application.Services;
+using Gloria.Commission.Api.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gloria.Commission.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = Policies.CanSeeAllEmployees)]
 [Route("api/v1/audit-logs")]
 [Produces("application/json")]
 [Tags("Denetim")]

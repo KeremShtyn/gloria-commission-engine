@@ -58,22 +58,46 @@ bunlar dosyayı reddettirmez, `import_errors` tablosuna düşer.
 dotnet test
 ```
 
-37 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
-altında; denetim kaydı ve dönem kilidi `PersistenceTests.cs` altında (SQLite in-memory).
+43 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
+altında; denetim kaydı ve dönem kilidi `PersistenceTests.cs`, yetki kuralı `AuthorizationTests.cs`
+altında.
 
-## Yetkilendirme
+## Kimlik ve yetkilendirme
 
-Gerçek kimlik doğrulama yok; rol HTTP header'ından okunuyor.
+Case gerçek bir kimlik doğrulama sistemi istemiyor; kimlik HTTP header'ından okunuyor.
+Yetkilendirme ise ASP.NET'in kendi altyapısıyla yapılıyor — elle yazılmış `if`'ler değil,
+`[Authorize]` nitelikleri ve policy'ler.
 
 | Header | Değer |
 |---|---|
-| `X-User-Role` | `Admin`, `Accounting` veya `Employee` |
+| `X-User-Role` | `Admin`, `Accounting` veya `Employee`. Yoksa istek 401 |
 | `X-User-Id` | Denetim kaydının aktörü |
 | `X-Employee-No` | Rol `Employee` ise personelin kendi numarası |
 | `X-Correlation-Id` | Opsiyonel. Gönderilirse log ve hata cevabında bu kimlik kullanılır |
 
-Admin kuralları yönetir, Muhasebe tüm personelin primini görür, Personel yalnızca kendisininkini.
-Header okunamazsa en dar yetki (`Employee`) uygulanır.
+| Policy | Kim | Nerede |
+|---|---|---|
+| `AdminOnly` | Admin | Kural yazma, dönem kapatma/açma |
+| `CanSeeAllEmployees` | Admin, Muhasebe | Dönem özeti, mutabakat, aktarım, denetim kayıtları |
+| `SelfOrPrivileged` | Kendi kaydı ya da ayrıcalıklı rol | Personelin prim detayı |
+
+`SelfOrPrivileged` bir rol kontrolü değil: hangi personelin sorgulandığı rota değerinde olduğu
+için kaynak farkındalığı olan bir `IAuthorizationHandler`. Birim testleri
+`AuthorizationTests.cs` altında.
+
+Kimlik yoksa **401**, kimlik var ama yetki yetersizse **403** döner; ikisi de aynı hata biçiminde.
+Yetki kontrolü ayrıca servis katmanında da tekrarlanır — controller'a güvenilmez.
+
+**JWT'ye geçiş.** Değişecek tek yer `Program.cs`'teki şu blok:
+
+```csharp
+builder.Services
+    .AddAuthentication(AuthenticationHeaders.Scheme)
+    .AddScheme<AuthenticationSchemeOptions, HeaderAuthenticationHandler>(...);
+```
+
+Yerine `.AddJwtBearer(...)` gelir. Controller'lar, policy'ler, servisler ve testler değişmez;
+`HttpContextCurrentUser` zaten header'ı değil claim'leri okuyor.
 
 ## API
 

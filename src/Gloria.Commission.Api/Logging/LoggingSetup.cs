@@ -61,11 +61,11 @@ public static class LoggingSetup
     /// </summary>
     public static void EnrichFromRequest(Serilog.IDiagnosticContext diagnosticContext, HttpContext context)
     {
-        diagnosticContext.Set("UserId", Header(context, HeaderCurrentUser.UserIdHeader) ?? "anonymous");
-        diagnosticContext.Set("UserRole", Header(context, HeaderCurrentUser.RoleHeader) ?? "unknown");
+        diagnosticContext.Set("UserId", Header(context, AuthenticationHeaders.UserId) ?? "anonymous");
+        diagnosticContext.Set("UserRole", Header(context, AuthenticationHeaders.Role) ?? "unknown");
 
         // Personel numarasi kimlik bilgisi degil, kayit anahtari — audit log ile eslesme icin gerekli.
-        var employeeNo = Header(context, HeaderCurrentUser.EmployeeNoHeader);
+        var employeeNo = Header(context, AuthenticationHeaders.EmployeeNo);
         if (employeeNo is not null) diagnosticContext.Set("EmployeeNo", employeeNo);
     }
 

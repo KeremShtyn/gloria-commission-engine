@@ -1,11 +1,14 @@
 using Gloria.Commission.Application.Dtos.Responses;
 using Gloria.Commission.Application.Services;
+using Gloria.Commission.Api.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gloria.Commission.Api.Controllers;
 
 /// <summary>Arayuzun acilis listeleri.</summary>
 [ApiController]
+[Authorize]
 [Route("api/v1")]
 [Produces("application/json")]
 [Tags("Referans Veri")]

@@ -86,9 +86,17 @@ Dönemi yeniden açmak Admin yetkisi ister ve denetim kaydına düşer.
 **Kural silinmez, pasife alınır.** Geçmiş hesap adımları kurala referans veriyor;
 fiziksel silme izlenebilirliği bozar.
 
-**Roller.** Admin kuralları yönetir, Muhasebe tüm personeli görür, Personel yalnızca kendisini.
-Yetki kontrolü servis katmanında; controller'a güvenilmez. Şu an rol HTTP header'ından okunuyor,
-üretimde bu sınıf JWT claim'lerini okuyan bir implementasyonla değiştirilir — çağıran kod aynı kalır.
+**Kimlik ve yetki ayrı tutulur.** Kimlik nereden geldiği bir detaydır: şu an HTTP header'ından
+okunuyor, üretimde JWT'den okunacak. Yetkilendirme ise buna bakmaksızın ASP.NET'in kendi
+altyapısında — `[Authorize]` nitelikleri ve policy'ler. Kimlik kaynağını değiştirmek tek bir
+satırı (`AddAuthentication`) değiştirmek demek; controller'lar, policy'ler ve servisler aynı kalır.
+
+Admin kuralları yönetir, Muhasebe tüm personeli görür, Personel yalnızca kendisini. Sonuncusu
+bir rol kontrolü değil, kaynak farkındalığı olan bir policy: hangi personelin sorgulandığı
+rota değerinde. Aynı kontrol servis katmanında da tekrarlanır — controller'a güvenilmez.
+
+Kimlik yoksa 401, kimlik var ama yetki yetersizse 403 döner. Bu ayrım istemcinin
+"tekrar giriş yap" ile "bu sana kapalı" arasında karar verebilmesi için gerekli.
 
 **Para birimi.** Yabancı para satışlar TRY'ye çevrilerek saklanır, kullanılan kur satırda tutulur.
 Kuru bulunamayan satır sessizce 1 kabul edilmez; hatalı satır olarak loglanır.

@@ -1,6 +1,8 @@
 using Gloria.Commission.Application.Dtos.Requests;
 using Gloria.Commission.Application.Dtos.Responses;
 using Gloria.Commission.Application.Services;
+using Gloria.Commission.Api.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gloria.Commission.Api.Controllers;
@@ -11,6 +13,7 @@ namespace Gloria.Commission.Api.Controllers;
 /// Is mantigi <see cref="IRuleService"/> icinde.
 /// </summary>
 [ApiController]
+[Authorize]
 [Route("api/v1/commission-rules")]
 [Produces("application/json")]
 [Tags("Prim Kurallari")]
@@ -35,6 +38,7 @@ public class CommissionRulesController : ControllerBase
 
     /// <summary>Yeni kural olusturur. Admin rolu gerekir.</summary>
     [HttpPost]
+    [Authorize(Policy = Policies.AdminOnly)]
     [ProducesResponseType(typeof(CommissionRuleResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -48,6 +52,7 @@ public class CommissionRulesController : ControllerBase
 
     /// <summary>Kurali gunceller. Admin rolu gerekir.</summary>
     [HttpPut("{id:int}")]
+    [Authorize(Policy = Policies.AdminOnly)]
     [ProducesResponseType(typeof(CommissionRuleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -60,6 +65,7 @@ public class CommissionRulesController : ControllerBase
     /// gecmis hesap adimlari kurala referans veriyor.
     /// </summary>
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = Policies.AdminOnly)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Deactivate(int id, CancellationToken ct)

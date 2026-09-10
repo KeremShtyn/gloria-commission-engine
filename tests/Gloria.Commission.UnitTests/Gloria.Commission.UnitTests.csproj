@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Gloria.Commission.Infrastructure\Gloria.Commission.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Gloria.Commission.Api\Gloria.Commission.Api.csproj" />
   </ItemGroup>
 
 </Project>

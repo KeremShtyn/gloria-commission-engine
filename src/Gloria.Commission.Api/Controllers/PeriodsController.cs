@@ -1,10 +1,13 @@
 using Gloria.Commission.Application.Dtos.Responses;
 using Gloria.Commission.Application.Services;
+using Gloria.Commission.Api.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gloria.Commission.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/v1/periods")]
 [Produces("application/json")]
 [Tags("Donem")]
@@ -25,6 +28,7 @@ public class PeriodsController : ControllerBase
     /// Admin rolu gerekir.
     /// </summary>
     [HttpPost("{year:int}/{month:int}/close")]
+    [Authorize(Policy = Policies.AdminOnly)]
     [ProducesResponseType(typeof(PeriodResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
@@ -33,6 +37,7 @@ public class PeriodsController : ControllerBase
 
     /// <summary>Donemi yeniden acar. Admin rolu gerekir ve islem audit log'a duser.</summary>
     [HttpPost("{year:int}/{month:int}/reopen")]
+    [Authorize(Policy = Policies.AdminOnly)]
     [ProducesResponseType(typeof(PeriodResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PeriodResponse>> Reopen(int year, int month, CancellationToken ct)
