@@ -72,9 +72,7 @@ public sealed class CommissionService : ICommissionService
         RequireValidMonth(month);
 
         var period = await ReadPeriodAsync(year, month, ct);
-        var (calculations, rows) = await CalculateAllAsync(year, month, ct);
-
-        _ = calculations;
+        var (_, rows) = await CalculateAllAsync(year, month, ct);
 
         return Summarize(year, month, period.IsClosed, rows);
     }

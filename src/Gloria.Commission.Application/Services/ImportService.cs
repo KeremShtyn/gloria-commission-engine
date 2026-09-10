@@ -21,6 +21,7 @@ public sealed class ImportService : IImportService
     private readonly IProductGroupRepository _productGroups;
     private readonly ISaleRecordRepository _sales;
     private readonly IImportRepository _imports;
+    private readonly IPeriodRepository _periods;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _currentUser;
 
@@ -30,6 +31,7 @@ public sealed class ImportService : IImportService
         IProductGroupRepository productGroups,
         ISaleRecordRepository sales,
         IImportRepository imports,
+        IPeriodRepository periods,
         IUnitOfWork unitOfWork,
         ICurrentUser currentUser)
     {
@@ -38,6 +40,7 @@ public sealed class ImportService : IImportService
         _productGroups = productGroups;
         _sales = sales;
         _imports = imports;
+        _periods = periods;
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
     }
@@ -51,6 +54,17 @@ public sealed class ImportService : IImportService
         if (!_importers.TryGetValue(source, out var importer))
             throw new DomainException("SOURCE_UNSUPPORTED", $"'{source}' kaynak sistemi icin ayristirici yok.");
 
+        var employeeIds = await _employees.GetIdsByEmployeeNoAsync(ct);
+        var groupIds = await _productGroups.GetIdsByCodeAsync(ct);
+        var knownEmployees = employeeIds.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var rows = importer.Parse(content, knownEmployees);
+
+        // Kapali doneme yazmayi veri erisim katmani zaten engelliyor. Burada onceden
+        // bakilmasinin sebebi: engel oraya kadar giderse yarim yazilmis bir parti kaydi
+        // geride kalir ve aktarim gecmisinde "0 satir" gibi gorunur.
+        await RequireOpenPeriodsAsync(rows, ct);
+
         var batch = new ImportBatch
         {
             SourceSystem = source,
@@ -60,13 +74,6 @@ public sealed class ImportService : IImportService
         };
 
         _imports.AddBatch(batch);
-        await _unitOfWork.SaveChangesAsync(ct);
-
-        var employeeIds = await _employees.GetIdsByEmployeeNoAsync(ct);
-        var groupIds = await _productGroups.GetIdsByCodeAsync(ct);
-        var knownEmployees = employeeIds.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var rows = importer.Parse(content, knownEmployees);
 
         // Ham satirlar donusum uygulanmadan once saklanir: ayristiricida bir hata
         // bulunursa kaynaga donmeden ayni parti yeniden islenebilir.
@@ -189,6 +196,28 @@ public sealed class ImportService : IImportService
     {
         var rows = await _imports.FindStagingRowsAsync(batchId, ct);
         return rows.Select(ImportMapper.ToResponse).ToList();
+    }
+
+    /// <summary>
+    /// Dosyadaki satirlarin dustugu donemlerden biri kapaliysa aktarimi hic baslatma.
+    /// </summary>
+    private async Task RequireOpenPeriodsAsync(
+        IReadOnlyList<RowParseResult> rows, CancellationToken ct)
+    {
+        var months = rows
+            .Where(r => r.IsValid)
+            .Select(r => (r.Sale!.TransactionDate.Year, r.Sale!.TransactionDate.Month))
+            .Distinct()
+            .ToList();
+
+        foreach (var (year, month) in months)
+        {
+            var period = await _periods.FindAsync(year, month, ct);
+
+            if (period is { Status: PeriodStatus.Closed })
+                throw new DomainException("PERIOD_CLOSED",
+                    $"{period} donemi kapali; bu doneme ait satis kayitlari aktarilamaz.");
+        }
     }
 
     /// <summary>

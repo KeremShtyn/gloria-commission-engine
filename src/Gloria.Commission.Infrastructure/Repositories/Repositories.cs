@@ -189,12 +189,6 @@ public sealed class CommissionResultRepository : ICommissionResultRepository
 
     public CommissionResultRepository(CommissionDbContext db) => _db = db;
 
-    public Task<CommissionResult?> FindWithLinesAsync(
-        Guid periodId, Guid employeeId, CancellationToken ct = default)
-        => _db.CommissionResults
-            .Include(r => r.Lines)
-            .FirstOrDefaultAsync(r => r.PeriodId == periodId && r.EmployeeId == employeeId, ct);
-
     public async Task<IReadOnlyList<CommissionResult>> FindByPeriodAsync(
         Guid periodId, CancellationToken ct = default)
         => await _db.CommissionResults
@@ -203,8 +197,6 @@ public sealed class CommissionResultRepository : ICommissionResultRepository
             .ToListAsync(ct);
 
     public void Add(CommissionResult result) => _db.CommissionResults.Add(result);
-
-    public void Remove(CommissionResult result) => _db.CommissionResults.Remove(result);
 
     public void RemoveLines(IEnumerable<CommissionResultLine> lines)
         => _db.CommissionResultLines.RemoveRange(lines);

@@ -258,6 +258,7 @@ export function DashboardPage() {
         <p className="hint">
           Her dosyanın satırları: veritabanına yazılan, mükerrer olduğu için atlanan ve
           ayrıştırılamadığı için hata tablosuna düşen. Hatalı satır dosyayı reddettirmez.
+          <strong> Bu bölüm dönemden bağımsızdır</strong> — son aktarımları gösterir.
         </p>
 
         {!loaded ? (

@@ -82,15 +82,11 @@ public interface ISaleRecordRepository
 
 public interface ICommissionResultRepository
 {
-    Task<CommissionResult?> FindWithLinesAsync(
-        Guid periodId, Guid employeeId, CancellationToken ct = default);
-
     /// <summary>Donemin tum sonuclari, adimlariyla. Personel basina ayri sorgu atmamak icin.</summary>
     Task<IReadOnlyList<CommissionResult>> FindByPeriodAsync(
         Guid periodId, CancellationToken ct = default);
 
     void Add(CommissionResult result);
-    void Remove(CommissionResult result);
     void RemoveLines(IEnumerable<CommissionResultLine> lines);
 
     /// <summary>
