@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
+import { EmptyState } from '../components/EmptyState'
 import { RuleFormModal } from '../components/RuleFormModal'
+import { TableSkeleton } from '../components/Skeleton'
 import { RULE_TYPE_LABEL } from '../constants'
 import { useSession } from '../context/SessionContext'
 import type { CommissionRuleRequest, CommissionRuleResponse, LookupResponse } from '../types'
@@ -29,6 +31,7 @@ export function RulesPage() {
   const [editing, setEditing] = useState<Editing>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -45,6 +48,8 @@ export function RulesPage() {
       setError(null)
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setLoaded(true)
     }
   }, [session])
 
@@ -109,6 +114,14 @@ export function RulesPage() {
           Aynı satışa birden fazla kural uyarsa yüksek öncelikli, eşitlikte daha spesifik olan uygulanır.
         </p>
 
+        {!loaded ? (
+          <TableSkeleton rows={6} columns={8} />
+        ) : rules.length === 0 ? (
+          <EmptyState
+            title="Henüz kural tanımlanmamış"
+            description="Prim hesaplanabilmesi için en az bir kural gerekir."
+          />
+        ) : (
         <div className="table-scroll">
           <table>
             <thead>
@@ -168,16 +181,10 @@ export function RulesPage() {
                   </td>
                 </tr>
               ))}
-              {rules.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="empty">
-                    Henüz kural tanımlanmamış.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {editing && (

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
+import { EmptyState } from '../components/EmptyState'
+import { TableSkeleton } from '../components/Skeleton'
 import { useSession } from '../context/SessionContext'
 import type { PeriodResponse } from '../types'
 import { formatDateTime } from '../utils/formatters'
@@ -10,6 +12,7 @@ export function PeriodsPage() {
   const [periods, setPeriods] = useState<PeriodResponse[]>([])
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -17,6 +20,8 @@ export function PeriodsPage() {
       setError(null)
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setLoaded(true)
     }
   }, [session])
 
@@ -58,6 +63,14 @@ export function PeriodsPage() {
         <h2>Dönem listesi ({periods.length})</h2>
         <p className="hint">Dönem kaydı ilk hesaplamada veya kapatma sırasında oluşur.</p>
 
+        {!loaded ? (
+          <TableSkeleton rows={4} columns={5} />
+        ) : periods.length === 0 ? (
+          <EmptyState
+            title="Henüz dönem oluşmadı"
+            description="Dönem kaydı ilk prim hesaplamasında ya da kapatma sırasında oluşur."
+          />
+        ) : (
         <div className="table-scroll">
           <table>
             <thead>
@@ -89,16 +102,10 @@ export function PeriodsPage() {
                   </td>
                 </tr>
               ))}
-              {periods.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="empty">
-                    Henüz dönem oluşmadı.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </>
   )

@@ -2,12 +2,14 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { RequireRole } from './components/RequireRole'
 import { SessionProvider } from './context/SessionContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { APP_ROUTES } from './navigation'
 
 export default function App() {
   return (
-    <SessionProvider>
-      <BrowserRouter>
+    <ThemeProvider>
+      <SessionProvider>
+        <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
             {APP_ROUTES.map((route) => {
@@ -22,8 +24,9 @@ export default function App() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
-        </Routes>
-      </BrowserRouter>
-    </SessionProvider>
+          </Routes>
+        </BrowserRouter>
+      </SessionProvider>
+    </ThemeProvider>
   )
 }

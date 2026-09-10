@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
+import { EmptyState } from '../components/EmptyState'
 import { Modal } from '../components/Modal'
+import { TableSkeleton } from '../components/Skeleton'
 import { useSession } from '../context/SessionContext'
 import type { AuditLogResponse, PagedResponse } from '../types'
 import { formatDateTime } from '../utils/formatters'
@@ -37,6 +39,7 @@ export function AuditLogPage() {
   const [data, setData] = useState<PagedResponse<AuditLogResponse> | null>(null)
   const [selected, setSelected] = useState<AuditLogResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -44,6 +47,8 @@ export function AuditLogPage() {
       setError(null)
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setLoaded(true)
     }
   }, [session, page, entityName])
 
@@ -88,6 +93,14 @@ export function AuditLogPage() {
       <div className="card">
         <h2>Değişiklik geçmişi ({data?.totalElements ?? 0})</h2>
 
+        {!loaded ? (
+          <TableSkeleton rows={8} columns={6} />
+        ) : (data?.content.length ?? 0) === 0 ? (
+          <EmptyState
+            title="Kayıt bulunamadı"
+            description="Seçili kayıt tipinde henüz bir değişiklik yapılmamış."
+          />
+        ) : (
         <div className="table-scroll">
           <table>
             <thead>
@@ -115,16 +128,10 @@ export function AuditLogPage() {
                   </td>
                 </tr>
               ))}
-              {(data?.content.length ?? 0) === 0 && (
-                <tr>
-                  <td colSpan={6} className="empty">
-                    Kayıt bulunamadı.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
+        )}
 
         {data && data.totalPages > 1 && (
           <div className="pager">

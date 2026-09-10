@@ -119,7 +119,9 @@ HTTPS zorunluluğu ve login rate limit ayrıca ele alınmalıdır.
 
 ## Ekranlar
 
-Yedi sayfa, rol bazlı menü. Personel rolü yalnızca kendi primini görür.
+Sol menü + üst çubuk düzeni. Yedi sayfa; menü ve rota koruması aynı listeden beslenir
+(`web/src/navigation.tsx`), yetkisi olmayan rol sayfayı menüde görmez ve URL'den de açamaz.
+Açık/koyu tema desteği var, tercih tarayıcıda saklanır.
 
 | Sayfa | İçerik |
 |---|---|

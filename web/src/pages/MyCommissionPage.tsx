@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { PeriodPicker } from '../components/PeriodPicker'
+import { StatSkeleton, TableSkeleton } from '../components/Skeleton'
 import { EXCLUSION_REASON_LABEL } from '../constants'
 import { useSession } from '../context/SessionContext'
 import type { CommissionResultResponse } from '../types'
@@ -74,6 +75,15 @@ export function MyCommissionPage() {
           </div>
         </PeriodPicker>
       </div>
+
+      {busy && !result && (
+        <>
+          <StatSkeleton />
+          <div className="card">
+            <TableSkeleton rows={8} columns={8} />
+          </div>
+        </>
+      )}
 
       {result && (
         <>

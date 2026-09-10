@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../api/client'
+import { EmptyState } from '../components/EmptyState'
 import { Modal } from '../components/Modal'
+import { TableSkeleton } from '../components/Skeleton'
 import { SOURCE_LABEL, STAGING_STATUS_LABEL } from '../constants'
 import { useSession } from '../context/SessionContext'
 import type { ImportBatchResponse, ImportErrorResponse, StagingRowResponse } from '../types'
@@ -23,6 +25,7 @@ export function ImportsPage() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -30,6 +33,8 @@ export function ImportsPage() {
       setError(null)
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setLoaded(true)
     }
   }, [session])
 
@@ -121,6 +126,14 @@ export function ImportsPage() {
       <div className="card">
         <h2>Aktarım geçmişi ({batches.length})</h2>
 
+        {!loaded ? (
+          <TableSkeleton rows={5} columns={9} />
+        ) : batches.length === 0 ? (
+          <EmptyState
+            title="Henüz aktarım yapılmadı"
+            description="Yukarıdaki formdan bir CSV yükleyin ya da zamanlanmış aktarımın çalışmasını bekleyin."
+          />
+        ) : (
         <div className="table-scroll">
           <table>
             <thead>
@@ -160,16 +173,10 @@ export function ImportsPage() {
                   </td>
                 </tr>
               ))}
-              {batches.length === 0 && (
-                <tr>
-                  <td colSpan={9} className="empty">
-                    Henüz aktarım yapılmadı.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {detail && (

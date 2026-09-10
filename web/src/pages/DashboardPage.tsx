@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import { EmptyState } from '../components/EmptyState'
 import { PeriodPicker } from '../components/PeriodPicker'
+import { StatSkeleton, TableSkeleton } from '../components/Skeleton'
 import { useSession } from '../context/SessionContext'
 import type { ImportBatchResponse, PeriodSummaryResponse, ReconciliationResponse } from '../types'
 import { amountClass, formatDateTime, formatMoney } from '../utils/formatters'
@@ -16,6 +18,7 @@ export function DashboardPage() {
   const [batches, setBatches] = useState<ImportBatchResponse[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(async () => {
     setBusy(true)
@@ -33,6 +36,7 @@ export function DashboardPage() {
       setError((e as Error).message)
     } finally {
       setBusy(false)
+      setLoaded(true)
     }
   }, [session, year, month])
 
@@ -65,6 +69,9 @@ export function DashboardPage() {
         />
       </div>
 
+      {!loaded && <StatSkeleton />}
+
+      {loaded && (
       <div className="stat-grid">
         <div className="stat-card">
           <span>Hak edilen toplam prim</span>
@@ -92,12 +99,21 @@ export function DashboardPage() {
           </small>
         </div>
       </div>
+      )}
 
       <div className="two-column">
         <div className="card">
           <h2>En çok prim hak edenler</h2>
           <p className="hint">Dönemin ilk beşi.</p>
 
+          {!loaded ? (
+            <TableSkeleton rows={5} columns={3} />
+          ) : topEarners.length === 0 ? (
+            <EmptyState
+              title="Bu dönemde prim hesaplanmadı"
+              description="Seçili ay için prime esas satış bulunmuyor ya da hesaplama henüz çalışmadı."
+            />
+          ) : (
           <div className="table-scroll">
             <table>
               <thead>
@@ -122,16 +138,10 @@ export function DashboardPage() {
                     </td>
                   </tr>
                 ))}
-                {topEarners.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="empty">
-                      Bu dönemde prim hesaplanmadı.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
+          )}
         </div>
 
         <div className="card">

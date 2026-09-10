@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
+import { EmptyState } from '../components/EmptyState'
 import { PeriodPicker } from '../components/PeriodPicker'
+import { TableSkeleton } from '../components/Skeleton'
 import { useSession } from '../context/SessionContext'
 import type { PeriodSummaryResponse } from '../types'
 import { amountClass, formatMoney } from '../utils/formatters'
@@ -85,6 +87,14 @@ export function PeriodSummaryPage() {
           <div className="card">
             <h2>Personel bazında</h2>
 
+            {busy ? (
+              <TableSkeleton rows={8} columns={6} />
+            ) : rows.length === 0 ? (
+              <EmptyState
+                title="Hesaplanmış prim yok"
+                description="Seçili dönemde prime esas satış bulunmuyor. Veri aktarımı yapıldığından emin olun."
+              />
+            ) : (
             <div className="table-scroll">
               <table>
                 <thead>
@@ -127,16 +137,10 @@ export function PeriodSummaryPage() {
                       </td>
                     </tr>
                   ))}
-                  {rows.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="empty">
-                        Bu dönemde hesaplanmış prim yok.
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
+            )}
           </div>
         </>
       )}
