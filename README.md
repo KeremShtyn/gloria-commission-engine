@@ -58,7 +58,7 @@ bunlar dosyayı reddettirmez, `import_errors` tablosuna düşer.
 dotnet test
 ```
 
-43 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
+48 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
 altında; denetim kaydı ve dönem kilidi `PersistenceTests.cs`, yetki kuralı `AuthorizationTests.cs`
 altında.
 
@@ -120,21 +120,19 @@ HTTPS zorunluluğu ve login rate limit ayrıca ele alınmalıdır.
 
 ## Ekranlar
 
-Sol menü + üst çubuk düzeni. Yedi sayfa; menü ve rota koruması aynı listeden beslenir
-(`web/src/navigation.tsx`), yetkisi olmayan rol sayfayı menüde görmez ve URL'den de açamaz.
-Açık/koyu tema desteği var, tercih tarayıcıda saklanır.
+İstenen iki ekran var. Sol menü + üst çubuk düzeni; menü ve rota koruması aynı listeden
+beslenir (`web/src/navigation.tsx`), yetkisi olmayan rol sayfayı menüde görmez ve URL'den de
+açamaz. Açık/koyu tema desteği var, tercih tarayıcıda saklanır.
 
-| Sayfa | İçerik |
-|---|---|
-| Genel bakış | Dönemin prim toplamı, ERP mutabakatı, veri kalitesi, son aktarımlar |
-| Primim | Personelin dönem primi ve hesabın her adımı |
-| Dönem özeti | Tüm personelin primi, satırdan detaya geçiş |
-| Prim kuralları | Kural listesi; ekleme ve düzenleme modal içinde |
-| Veri aktarımı | Yükleme, aktarım geçmişi, hatalı ve ham satırlar |
-| Dönemler | Dönem kapatma ve yeniden açma |
-| Denetim | Değişiklik geçmişi, eski/yeni değer karşılaştırması |
+| Sayfa | İçerik | Kim |
+|---|---|---|
+| Prim kuralları | Kural listesi; ekleme ve düzenleme modal içinde | Admin yazar, Muhasebe okur |
+| Primim | Dönem primi ve hesabın her adımı | Personel kendini, Admin/Muhasebe herkesi |
 
 Prim dışı kalan satışlar da nedeniyle birlikte listelenir; hiçbir kayıt sessizce düşmez.
+
+Aktarım, dönem kapatma ve denetim kaydı ekranı yok — bu işlevler API ucu olarak duruyor
+(bkz. yukarıdaki tablo), ekranları istenmediği için yazılmadı.
 
 ## Öne çıkan kararlar
 

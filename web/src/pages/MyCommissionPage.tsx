@@ -6,7 +6,7 @@ import { StatSkeleton, TableSkeleton } from '../components/Skeleton'
 import { EXCLUSION_REASON_LABEL } from '../constants'
 import { useSession } from '../context/SessionContext'
 import type { CommissionResultResponse, EmployeeResponse } from '../types'
-import { amountClass, formatMoney, formatPercent } from '../utils/formatters'
+import { amountClass, formatDateTime, formatMoney, formatPercent } from '../utils/formatters'
 
 export function MyCommissionPage() {
   const { session, canSeeAllEmployees } = useSession()
@@ -131,7 +131,8 @@ export function MyCommissionPage() {
               <small>
                 <span className={result.periodClosed ? 'badge warn' : 'badge'}>
                   {result.periodClosed ? 'Kapalı' : 'Açık'}
-                </span>
+                </span>{' '}
+                · hesap {formatDateTime(result.calculatedAtUtc)}
               </small>
             </div>
             <div className="stat-card">

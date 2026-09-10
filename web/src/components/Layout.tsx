@@ -35,9 +35,7 @@ export function Layout() {
 
   // Menu ile rota korumasi ayni listeden beslenir; ayrisamazlar.
   const visible = routesFor(session.role)
-  const current = APP_ROUTES.find((route) =>
-    route.path === '/' ? location.pathname === '/' : location.pathname.startsWith(route.path),
-  )
+  const current = APP_ROUTES.find((route) => location.pathname.startsWith(route.path))
 
   return (
     <div className="app-shell">
@@ -55,7 +53,6 @@ export function Layout() {
             <NavLink
               key={route.path}
               to={route.path}
-              end={route.path === '/'}
               className={({ isActive }) => (isActive ? 'active' : undefined)}
             >
               {route.label}

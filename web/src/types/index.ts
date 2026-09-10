@@ -86,41 +86,6 @@ export interface CommissionResultResponse {
   excludedSales: ExcludedSaleResponse[]
 }
 
-export interface EmployeeCommissionResponse {
-  employeeId: string
-  employeeNo: string
-  fullName: string
-  department: string
-  hotel: string
-  totalSalesBase: number
-  totalCommission: number
-}
-
-export interface PeriodSummaryResponse {
-  period: string
-  closed: boolean
-  employeeCount: number
-  totalSalesBase: number
-  totalCommission: number
-  employees: EmployeeCommissionResponse[]
-}
-
-export interface ReconciliationGroupResponse {
-  productGroup: string
-  operationalRevenue: number
-  accountedRevenue: number
-  difference: number
-}
-
-export interface ReconciliationResponse {
-  period: string
-  groups: ReconciliationGroupResponse[]
-  unpostedCount: number
-  unpostedAmount: number
-  unmatchedRefundCount: number
-  importErrors: { errorCode: string; count: number }[]
-}
-
 export interface EmployeeResponse {
   id: string
   employeeNo: string
@@ -129,77 +94,6 @@ export interface EmployeeResponse {
   hotel: string
   hireDate: string
   terminationDate: string | null
-}
-
-export interface PeriodResponse {
-  key: string
-  year: number
-  month: number
-  status: 'Open' | 'Closed'
-  closedAtUtc: string | null
-  closedBy: string | null
-}
-
-export interface ImportBatchResponse {
-  id: string
-  sourceSystem: string
-  fileName: string
-  totalRows: number
-  importedRows: number
-  duplicateRows: number
-  failedRows: number
-  importedBy: string
-  startedAtUtc: string
-  completedAtUtc: string | null
-}
-
-export interface ImportErrorResponse {
-  rowNumber: number
-  errorCode: string
-  errorMessage: string
-  rawLine: string
-}
-
-export interface StagingRowResponse {
-  rowNumber: number
-  sourceSystem: string
-  status: string
-  rawLine: string
-  saleRecordId?: string
-  receivedAtUtc: string
-  processedAtUtc: string | null
-}
-
-export interface ImportSummaryResponse {
-  batchId: string
-  sourceSystem: string
-  fileName: string
-  totalRows: number
-  importedRows: number
-  duplicateRows: number
-  failedRows: number
-  matchedReversals: number
-  errors: ImportErrorResponse[]
-}
-
-export interface AuditLogResponse {
-  id: string
-  entityName: string
-  entityId: string
-  action: string
-  oldValues?: string
-  newValues?: string
-  changedBy: string
-  changedByRole: string
-  changedAtUtc: string
-}
-
-export interface PagedResponse<T> {
-  content: T[]
-  page: number
-  size: number
-  totalElements: number
-  totalPages: number
 }
 
 export interface ApiError {

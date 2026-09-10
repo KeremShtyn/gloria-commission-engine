@@ -1,19 +1,10 @@
 import type {
   ApiError,
-  AuditLogResponse,
   CommissionResultResponse,
   CommissionRuleRequest,
   CommissionRuleResponse,
   EmployeeResponse,
-  ImportBatchResponse,
-  ImportErrorResponse,
-  ImportSummaryResponse,
   LookupResponse,
-  PagedResponse,
-  PeriodResponse,
-  PeriodSummaryResponse,
-  ReconciliationResponse,
-  StagingRowResponse,
   UserRole,
 } from '../types'
 
@@ -90,60 +81,6 @@ export const api = {
       session,
       `/api/v1/commissions/${year}/${month}/employees/${employeeNo}`,
     ),
-
-  periodSummary: (session: Session, year: number, month: number) =>
-    get<PeriodSummaryResponse>(session, `/api/v1/commissions/${year}/${month}`),
-
-  runPeriod: (session: Session, year: number, month: number) =>
-    fetch(`${BASE_URL}/api/v1/commissions/${year}/${month}/calculate`, {
-      method: 'POST',
-      headers: headers(session),
-    }).then(handle<PeriodSummaryResponse>),
-
-  reconciliation: (session: Session, year: number, month: number) =>
-    get<ReconciliationResponse>(session, `/api/v1/commissions/${year}/${month}/reconciliation`),
-
-  // --- Donem ---
-  periods: (session: Session) => get<PeriodResponse[]>(session, '/api/v1/periods'),
-
-  closePeriod: (session: Session, year: number, month: number) =>
-    fetch(`${BASE_URL}/api/v1/periods/${year}/${month}/close`, {
-      method: 'POST',
-      headers: headers(session),
-    }).then(handle<PeriodResponse>),
-
-  reopenPeriod: (session: Session, year: number, month: number) =>
-    fetch(`${BASE_URL}/api/v1/periods/${year}/${month}/reopen`, {
-      method: 'POST',
-      headers: headers(session),
-    }).then(handle<PeriodResponse>),
-
-  // --- Aktarim ---
-  importBatches: (session: Session) => get<ImportBatchResponse[]>(session, '/api/v1/imports'),
-
-  importErrors: (session: Session, batchId: string) =>
-    get<ImportErrorResponse[]>(session, `/api/v1/imports/${batchId}/errors`),
-
-  stagingRows: (session: Session, batchId: string) =>
-    get<StagingRowResponse[]>(session, `/api/v1/imports/${batchId}/staging`),
-
-  uploadImport: (session: Session, source: string, file: File) => {
-    const form = new FormData()
-    form.append('file', file)
-
-    return fetch(`${BASE_URL}/api/v1/imports/${source}`, {
-      method: 'POST',
-      headers: headers(session),
-      body: form,
-    }).then(handle<ImportSummaryResponse>)
-  },
-
-  // --- Denetim ---
-  auditLogs: (session: Session, page: number, size: number, entityName?: string) => {
-    const query = new URLSearchParams({ page: String(page), size: String(size) })
-    if (entityName) query.set('entityName', entityName)
-    return get<PagedResponse<AuditLogResponse>>(session, `/api/v1/audit-logs?${query}`)
-  },
 
   // --- Referans ---
   employees: (session: Session) => get<EmployeeResponse[]>(session, '/api/v1/employees'),

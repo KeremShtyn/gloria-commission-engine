@@ -505,12 +505,6 @@ p.hint {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.two-column {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(370px, 1fr));
-}
-
 /* ---- istatistik kartlari ---- */
 
 .stat-grid {
@@ -705,16 +699,6 @@ tfoot td {
   font-size: var(--fs-sm);
 }
 
-.pager {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 14px;
-  font-size: var(--fs-md);
-  color: var(--text-muted);
-}
-
 /* ==========================================================================
    Modal
    ========================================================================== */
@@ -806,41 +790,10 @@ tfoot td {
   font-size: var(--fs-md);
 }
 
-.tab-bar {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid var(--border);
-}
-
-.tab-bar button {
-  border: 0;
-  background: transparent;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  padding: 8px 12px;
-  color: var(--text-muted);
-}
-
 .tab-bar button.active {
   color: var(--accent);
   font-weight: 600;
   border-bottom-color: var(--accent);
-}
-
-.json-view {
-  background: var(--surface-sunken);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  font-family: 'Cascadia Mono', Consolas, monospace;
-  font-size: var(--fs-sm);
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 320px;
-  overflow: auto;
-  margin: 0;
-  color: var(--text);
 }
 
 /* ==========================================================================
@@ -1023,80 +976,11 @@ tfoot td {
    ayrica tanimlanmaz.
    ========================================================================== */
 
-.bar-chart {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.bar-chart li {
-  display: grid;
-  grid-template-columns: 130px 1fr auto;
-  align-items: center;
-  gap: 12px;
-}
-
-.bar-label {
-  min-width: 0;
-}
-
-.bar-name {
-  display: block;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bar-sub {
-  display: block;
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-}
-
-.bar-track {
-  position: relative;
-  height: 20px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-soft);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 3px;
-  transition: width 0.35s ease;
-}
-
-.bar-value {
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  white-space: nowrap;
-  color: var(--text);
-}
-
 .bar-value.negative {
   color: var(--danger-fg);
 }
 
 /* ---- sifir cizgisinin iki yani ---- */
-
-.diverging-track {
-  overflow: visible;
-}
-
-.diverging .bar-fill {
-  position: absolute;
-  top: 0;
-}
 
 .bar-fill.positive {
   background: var(--accent);
@@ -1106,26 +990,7 @@ tfoot td {
   background: var(--danger-fg);
 }
 
-.zero-line {
-  position: absolute;
-  left: 50%;
-  top: -3px;
-  bottom: -3px;
-  width: 1px;
-  background: var(--border);
-  z-index: 1;
-}
-
 /* ---- yigilmis ---- */
-
-.stacked-track {
-  display: flex;
-}
-
-.bar-segment {
-  height: 100%;
-  transition: width 0.35s ease;
-}
 
 .bar-segment.imported,
 .swatch.imported {
@@ -1140,28 +1005,6 @@ tfoot td {
 .bar-segment.failed,
 .swatch.failed {
   background: var(--danger-fg);
-}
-
-.chart-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 14px;
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
-}
-
-.chart-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  display: inline-block;
 }
 
 @media (max-width: 640px) {

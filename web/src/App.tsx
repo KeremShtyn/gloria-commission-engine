@@ -1,9 +1,15 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { RequireRole } from './components/RequireRole'
-import { SessionProvider } from './context/SessionContext'
+import { SessionProvider, useSession } from './context/SessionContext'
 import { ThemeProvider } from './context/ThemeContext'
-import { APP_ROUTES } from './navigation'
+import { APP_ROUTES, landingFor } from './navigation'
+
+/** Kok adres role gore acilis sayfasina gider; her rolun gordugu ilk sayfa ayni degil. */
+function LandingRedirect() {
+  const { session } = useSession()
+  return <Navigate to={landingFor(session.role)} replace />
+}
 
 export default function App() {
   return (
@@ -12,17 +18,17 @@ export default function App() {
         <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            {APP_ROUTES.map((route) => {
-              const element = <RequireRole roles={route.roles}>{route.element}</RequireRole>
+            <Route index element={<LandingRedirect />} />
 
-              return route.path === '/' ? (
-                <Route key={route.path} index element={element} />
-              ) : (
-                <Route key={route.path} path={route.path.slice(1)} element={element} />
-              )
-            })}
+            {APP_ROUTES.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path.slice(1)}
+                element={<RequireRole roles={route.roles}>{route.element}</RequireRole>}
+              />
+            ))}
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<LandingRedirect />} />
           </Route>
           </Routes>
         </BrowserRouter>
