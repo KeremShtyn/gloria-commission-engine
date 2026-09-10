@@ -58,7 +58,7 @@ bunlar dosyayı reddettirmez, `import_errors` tablosuna düşer.
 dotnet test
 ```
 
-61 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
+62 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
 altında; denetim kaydı ve dönem kilidi `PersistenceTests.cs`, yetki kuralı `AuthorizationTests.cs`,
 sayfalama ve sıralama `PeriodSummaryPagingTests.cs` altında.
 
@@ -138,9 +138,12 @@ Dönem özetinde sıralanabilir alanlar: `fullName` (varsayılan), `employeeNo`,
 eşitlikte personel numarası belirleyicidir — sabit bir kırıcı olmadan aynı satır iki sayfada
 görünebilirdi.
 
-Geçersiz parametre sessizce düzeltilmez: beyaz listede olmayan bir sıralama alanı, `1-100`
-aralığı dışında bir `size` ya da negatif `page` **400** döner. Sessizce varsayılana düşseydi
-istemci eksik veriyle çalıştığını fark etmezdi.
+Sıfır ve negatif `size` "belirtilmemiş" sayılır, varsayılan 20'ye düşer — bunlar bir talep
+değil, boş ya da hatalı bir form değeridir.
+
+Üst sınırın aşılması farklıdır: `size > 100`, beyaz listede olmayan bir sıralama alanı ve
+negatif `page` **400** döner. 500 satır isteyip 20 alan istemci eksik veriyle çalıştığını
+fark etmezdi.
 
 Dönem toplamları sayfadan bağımsızdır; `totalSalesBase` ve `totalCommission` her zaman dönemin
 tamamını kapsar, sayfanın değil.

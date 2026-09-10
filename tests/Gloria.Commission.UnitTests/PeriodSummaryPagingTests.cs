@@ -130,7 +130,6 @@ public class PeriodSummaryPagingTests : IDisposable
 
     [Theory]
     [InlineData(-1, 20, null)]
-    [InlineData(0, 0, null)]
     [InlineData(0, 101, null)]
     [InlineData(0, 20, "fullName,ters")]
     [InlineData(0, 20, "fullName,asc,desc")]
@@ -149,6 +148,21 @@ public class PeriodSummaryPagingTests : IDisposable
         query.Page.Should().Be(0);
         query.Size.Should().Be(PageQuery.DefaultSize);
         query.SortField.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Sifir ve negatif size bir talep degil, bos ya da hatali form degeri sayilir;
+    /// istegi reddetmek yerine varsayilan uygulanir. Ust sinir bundan farkli:
+    /// 500 satir isteyip 20 alan istemci eksik veriyle calistigini fark etmez.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void Sifir_ve_negatif_size_varsayilana_duser(int size)
+    {
+        var query = PageQuery.Parse(0, size, null, ["fullName"]);
+
+        query.Size.Should().Be(PageQuery.DefaultSize);
     }
 
     // ---- kurulum ----

@@ -5,8 +5,10 @@ namespace Gloria.Commission.Application.Dtos.Requests;
 /// <summary>
 /// Sayfali liste istegi: <c>?page=0&amp;size=20&amp;sort=totalCommission,desc</c>.
 ///
-/// Gecersiz deger sessizce duzeltilmez. Istemci 500 satir isteyip 20 alirsa
-/// eksik veriyle calistigini fark etmez; bu yuzden sinir disi istek 400 doner.
+/// Sifir ve negatif <c>size</c> "belirtilmemis" sayilir, varsayilana duser:
+/// bu degerler bir talep degil, bos ya da hatali bir form degeridir.
+/// Ust sinirin asilmasi farklidir; istemci 500 satir isteyip 20 alirsa eksik
+/// veriyle calistigini fark etmez, o yuzden <c>size &gt; MaxSize</c> 400 doner.
 /// Siralanabilir alanlar listeyi ureten serviste beyaz listeye vurulur:
 /// bir yazim hatasi ('totalComission') sessizce varsayilan siralamaya dusmez.
 /// </summary>
@@ -31,11 +33,16 @@ public sealed record PageQuery
         if (page is < 0)
             throw new DomainException("INVALID_QUERY", $"page 0 veya daha buyuk olmali: {page}");
 
-        if (size is < 1 or > MaxSize)
+        if (size > MaxSize)
             throw new DomainException("INVALID_QUERY",
-                $"size 1-{MaxSize} araliginda olmali: {size}");
+                $"size en fazla {MaxSize} olabilir: {size}");
 
-        var query = new PageQuery { Page = page ?? 0, Size = size ?? DefaultSize };
+        // Sifir ve negatif size varsayilana duser; ustunu isteyen ise uyarilir.
+        var query = new PageQuery
+        {
+            Page = page ?? 0,
+            Size = size is null or < 1 ? DefaultSize : size.Value
+        };
 
         if (string.IsNullOrWhiteSpace(sort)) return query;
 
