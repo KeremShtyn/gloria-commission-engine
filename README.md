@@ -58,7 +58,7 @@ bunlar dosyayı reddettirmez, `import_errors` tablosuna düşer.
 dotnet test
 ```
 
-59 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
+61 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
 altında; denetim kaydı ve dönem kilidi `PersistenceTests.cs`, yetki kuralı `AuthorizationTests.cs`,
 sayfalama ve sıralama `PeriodSummaryPagingTests.cs` altında.
 
@@ -144,6 +144,9 @@ ya da negatif sayfa **400** döner. Sessizce varsayılana düşseydi istemci eks
 
 Dönem toplamları sayfadan bağımsızdır; `totalSalesBase` ve `totalCommission` her zaman dönemin
 tamamını kapsar, sayfanın değil.
+
+Son sayfanın ötesindeki bir sayfa hata değil, boş `content` döner — sayfa numarası geçerli bir
+değer, sadece o aralıkta kayıt yok. Arayüz bu durumda son sayfaya çeker.
 
 ## Ekranlar
 
