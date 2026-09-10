@@ -61,8 +61,10 @@ export function CommissionGrid({
     )
   }
 
-  const from = data.page * data.size + 1
-  const to = Math.min(from + data.content.length - 1, data.totalElements)
+  // Sayfa araligi icerikten turetilir; bos sayfada "1981-13 / 13" gibi bir metin cikmasin.
+  const from = data.content.length > 0 ? data.page * data.size + 1 : 0
+  const to = from + data.content.length - 1
+  const shownPage = Math.min(data.page + 1, data.totalPages)
 
   return (
     <div className="card">
@@ -96,6 +98,13 @@ export function CommissionGrid({
             </tr>
           </thead>
           <tbody>
+            {data.content.length === 0 && (
+              <tr>
+                <td colSpan={COLUMNS.length} className="empty">
+                  Bu sayfada kayıt yok.
+                </td>
+              </tr>
+            )}
             {data.content.map((row) => (
               <tr
                 key={row.employeeNo}
@@ -133,7 +142,7 @@ export function CommissionGrid({
         </select>
 
         <span>
-          {from}–{to} / {data.totalElements}
+          {data.content.length > 0 ? `${from}–${to}` : '0'} / {data.totalElements}
         </span>
 
         <button
@@ -144,7 +153,7 @@ export function CommissionGrid({
           ← Önceki
         </button>
         <span>
-          {data.page + 1} / {data.totalPages}
+          {shownPage} / {data.totalPages}
         </span>
         <button
           type="button"

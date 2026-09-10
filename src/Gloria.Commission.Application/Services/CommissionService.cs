@@ -228,14 +228,22 @@ public sealed class CommissionService : ICommissionService
         => descending ? rows.OrderByDescending(key, comparer) : rows.OrderBy(key, comparer);
 
     private static PagedResponse<EmployeeCommissionResponse> Paginate(
-        List<EmployeeCommissionResponse> rows, PageQuery query) => new()
+        List<EmployeeCommissionResponse> rows, PageQuery query)
     {
-        Content = rows.Skip(query.Page * query.Size).Take(query.Size).ToList(),
-        Page = query.Page,
-        Size = query.Size,
-        TotalElements = rows.Count,
-        TotalPages = (int)Math.Ceiling(rows.Count / (double)query.Size)
-    };
+        // Carpim long: page * size int sinirini asinca sonuc negatife doner ve
+        // Skip(negatif) listenin tamamini gecirirdi -- son sayfanin otesindeki
+        // bir istek bos degil, tum liste olarak cevaplanirdi.
+        var skip = (long)query.Page * query.Size;
+
+        return new PagedResponse<EmployeeCommissionResponse>
+        {
+            Content = skip >= rows.Count ? [] : rows.Skip((int)skip).Take(query.Size).ToList(),
+            Page = query.Page,
+            Size = query.Size,
+            TotalElements = rows.Count,
+            TotalPages = (int)Math.Ceiling(rows.Count / (double)query.Size)
+        };
+    }
 
     /// <summary>Personel rolu yalnizca kendi primini goruntuleyebilir.</summary>
     private void Authorize(string employeeNo)

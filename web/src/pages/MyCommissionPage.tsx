@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, isAborted } from '../api/client'
 import { CommissionGrid } from '../components/CommissionGrid'
 import { PeriodPicker } from '../components/PeriodPicker'
 import { StatSkeleton, TableSkeleton } from '../components/Skeleton'
@@ -57,52 +57,77 @@ export function MyCommissionPage() {
    * Donem, siralama ve sayfa boyutu degisince sayfa basa doner. Aksi halde
    * 5. sayfadayken 12 kisilik bir donem secen kullanici bos bir sayfa gorurdu.
    */
-  const loadSummary = useCallback(async () => {
-    if (locked) return
+  /** "Getir" dugmesi ayni parametrelerle yeniden yuklemeyi tetikler. */
+  const [reloadToken, setReloadToken] = useState(0)
+  const refresh = () => setReloadToken((token) => token + 1)
 
-    setGridBusy(true)
-    try {
-      // Onceki liste ekranda kalir, yalnizca soldurulur: her sayfa gecisinde
-      // iskelete donmek listeyi titretiyordu.
-      setSummary(await api.periodSummary(session, year, month, { page, size, sort }))
-    } catch (e) {
-      setSummary(null)
-      setError((e as Error).message)
-    } finally {
-      setGridBusy(false)
-    }
-  }, [locked, session, year, month, page, size, sort])
+  const loadSummary = useCallback(
+    async (signal: AbortSignal) => {
+      if (locked) return
 
-  const loadDetail = useCallback(async () => {
-    if (!selected) {
-      setResult(null)
-      return
-    }
+      setGridBusy(true)
+      try {
+        // Onceki liste ekranda kalir, yalnizca soldurulur: her sayfa gecisinde
+        // iskelete donmek listeyi titretiyordu.
+        setSummary(await api.periodSummary(session, year, month, { page, size, sort }, signal))
+        setError(null)
+      } catch (e) {
+        if (isAborted(e)) return
+        setSummary(null)
+        setError((e as Error).message)
+      } finally {
+        if (!signal.aborted) setGridBusy(false)
+      }
+    },
+    [locked, session, year, month, page, size, sort],
+  )
 
-    setBusy(true)
-    setError(null)
-    try {
-      setResult(await api.commission(session, year, month, selected))
-    } catch (e) {
-      setResult(null)
-      setError((e as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }, [session, year, month, selected])
+  const loadDetail = useCallback(
+    async (signal: AbortSignal) => {
+      if (!selected) {
+        setResult(null)
+        return
+      }
+
+      setBusy(true)
+      setError(null)
+      try {
+        setResult(await api.commission(session, year, month, selected, signal))
+      } catch (e) {
+        if (isAborted(e)) return
+        setResult(null)
+        setError((e as Error).message)
+      } finally {
+        if (!signal.aborted) setBusy(false)
+      }
+    },
+    [session, year, month, selected],
+  )
+
+  /*
+   * Istek iptal edilebilir olmali: kullanici hizlica sayfa degistirdiginde
+   * yolda kalan eski cevap yeni sayfanin uzerine yazabilirdi.
+   */
+  useEffect(() => {
+    const controller = new AbortController()
+    void loadSummary(controller.signal)
+    return () => controller.abort()
+  }, [loadSummary, reloadToken])
 
   useEffect(() => {
-    void loadSummary()
-  }, [loadSummary])
+    const controller = new AbortController()
+    void loadDetail(controller.signal)
+    return () => controller.abort()
+  }, [loadDetail, reloadToken])
 
+  /*
+   * Adres cubugundan gelen sayfa listenin disindaysa son sayfaya cekilir;
+   * ?page=99 ile paylasilan bir baglanti bos tablo acmasin.
+   */
   useEffect(() => {
-    void loadDetail()
-  }, [loadDetail])
-
-  const refresh = () => {
-    void loadSummary()
-    void loadDetail()
-  }
+    const totalPages = summary?.employees.totalPages ?? 0
+    if (totalPages > 0 && page > totalPages - 1) update({ page: String(totalPages - 1) })
+  }, [summary, page, update])
 
   return (
     <>

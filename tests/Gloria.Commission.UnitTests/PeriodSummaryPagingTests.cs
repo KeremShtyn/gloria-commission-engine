@@ -80,6 +80,19 @@ public class PeriodSummaryPagingTests : IDisposable
         second.EmployeeCount.Should().Be(3);
     }
 
+    [Theory]
+    [InlineData(5)]
+    [InlineData(200_000_000)] // page * size int sinirini asar
+    public async Task Son_sayfanin_otesi_bos_doner(int page)
+    {
+        using var db = NewContext();
+
+        var summary = await NewService(db).GetPeriodSummaryAsync(2026, 8, page, 20, null);
+
+        summary.Employees.Content.Should().BeEmpty();
+        summary.Employees.TotalElements.Should().Be(3);
+    }
+
     [Fact]
     public async Task Varsayilan_siralama_ada_gore_turkce_harf_sirasindadir()
     {

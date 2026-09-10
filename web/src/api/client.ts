@@ -49,8 +49,16 @@ async function handle<T>(response: Response): Promise<T> {
   throw new Error(message)
 }
 
-const get = <T>(session: Session, path: string) =>
-  fetch(`${BASE_URL}${path}`, { headers: headers(session) }).then(handle<T>)
+/**
+ * Okuma istekleri iptal edilebilir. Kullanici hizlica sayfa degistirdiginde
+ * eski istek yolda kalir; iptal edilmezse geç gelen cevap yeni sayfanin
+ * uzerine yazabilir.
+ */
+const get = <T>(session: Session, path: string, signal?: AbortSignal) =>
+  fetch(`${BASE_URL}${path}`, { headers: headers(session), signal }).then(handle<T>)
+
+/** Iptal edilen istek hata degil; cagiran taraf bunu sessizce gecer. */
+export const isAborted = (error: unknown) => (error as Error)?.name === 'AbortError'
 
 export const api = {
   // --- Kurallar ---
@@ -77,10 +85,17 @@ export const api = {
     }).then(handle<void>),
 
   // --- Prim ---
-  commission: (session: Session, year: number, month: number, employeeNo: string) =>
+  commission: (
+    session: Session,
+    year: number,
+    month: number,
+    employeeNo: string,
+    signal?: AbortSignal,
+  ) =>
     get<CommissionResultResponse>(
       session,
       `/api/v1/commissions/${year}/${month}/employees/${employeeNo}`,
+      signal,
     ),
 
   /**
@@ -92,13 +107,18 @@ export const api = {
     year: number,
     month: number,
     options: { page: number; size: number; sort: string },
+    signal?: AbortSignal,
   ) => {
     const query = new URLSearchParams({
       page: String(options.page),
       size: String(options.size),
       sort: options.sort,
     })
-    return get<PeriodSummaryResponse>(session, `/api/v1/commissions/${year}/${month}?${query}`)
+    return get<PeriodSummaryResponse>(
+      session,
+      `/api/v1/commissions/${year}/${month}?${query}`,
+      signal,
+    )
   },
 
   // --- Referans ---
