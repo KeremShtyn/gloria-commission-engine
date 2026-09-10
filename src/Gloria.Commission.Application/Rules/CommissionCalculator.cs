@@ -24,8 +24,22 @@ public sealed class CommissionCalculator : ICommissionCalculator
         var excluded = new List<ExcludedSale>();
         var byRule = new Dictionary<int, (CommissionRule Rule, List<SaleRecord> Sales)>();
 
+        // İptal edilmiş satış ile onu iptal eden iade birbirini götürür; ikisi de tabana girmez.
+        // Yalnızca iadesi bu dönemde eşleşememiş kayıtlar negatif tutarla düşülür
+        // (orijinali önceki döneme ait iadeler bu şekilde cari aya mahsup edilir).
+        var idsInScope = sales.Select(s => s.Id).ToHashSet();
+
         foreach (var sale in sales)
         {
+            if (sale.Status == SaleStatus.Refund
+                && sale.ReversedSaleId is { } originalId
+                && idsInScope.Contains(originalId))
+            {
+                excluded.Add(Exclude(sale, "REVERSED_PAIR",
+                    $"{sale.SourceDocumentNo} iadesi, aynı dönemdeki orijinal satışıyla netleşti."));
+                continue;
+            }
+
             if (!sale.IsCommissionable)
             {
                 excluded.Add(Exclude(sale, "NOT_COMMISSIONABLE",

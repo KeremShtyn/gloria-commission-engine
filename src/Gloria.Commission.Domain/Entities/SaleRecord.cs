@@ -45,6 +45,12 @@ public class SaleRecord
 
     public SaleStatus Status { get; set; } = SaleStatus.Normal;
 
+    /// <summary>
+    /// Kaynak sistemin verdiği referans (ERP RM satırlarında iptal edilen DocNumber).
+    /// İçeriği kaynak sisteme göre değişir, güvenilir bir join anahtarı değildir; eşleştirmede ipucu olarak kullanılır.
+    /// </summary>
+    public string? SourceReference { get; set; }
+
     /// <summary>Bu kayıt bir iade ise, iptal ettiği satışın Id'si (eşleştirilebildiyse).</summary>
     public long? ReversedSaleId { get; set; }
     public SaleRecord? ReversedSale { get; set; }
