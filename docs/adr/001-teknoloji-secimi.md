@@ -1,7 +1,5 @@
 # ADR-001: Teknoloji seçimi
 
-**Durum:** Kabul edildi · 2026-09-10
-
 ## Bağlam
 
 Case .NET 8+ Web API, EF Core, SQL Server LocalDB veya SQLite, frontend için React (Vite) istiyor.

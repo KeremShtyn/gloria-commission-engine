@@ -1,7 +1,5 @@
 # ADR-005: Tarihte katı, tutarda toleranslı ayrıştırma
 
-**Durum:** Kabul edildi · 2026-09-10
-
 ## Bağlam
 
 Kaynak dosyalar kirli. Verilen ay içinde karşılaşılanlar:

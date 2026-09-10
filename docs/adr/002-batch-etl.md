@@ -1,7 +1,5 @@
 # ADR-002: Gerçek zamanlı entegrasyon yerine gecelik batch
 
-**Durum:** Kabul edildi · 2026-09-10
-
 ## Bağlam
 
 Satış verisi Fidelio (PMS), Flyby (POS) ve Oracle JDE (ERP) üzerinde ayrı ayrı oluşuyor.

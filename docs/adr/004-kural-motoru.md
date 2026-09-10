@@ -1,7 +1,5 @@
 # ADR-004: Kural veri, kural tipi kod
 
-**Durum:** Kabul edildi · 2026-09-10
-
 ## Bağlam
 
 Yarın golf dersi satışı prim kapsamına girdiğinde ya da SPA oranı %6'dan %7'ye çıktığında

@@ -1,7 +1,5 @@
 # ADR-006: Denetim kaydı ve dönem kilidi veri erişim katmanında
 
-**Durum:** Kabul edildi · 2026-09-10
-
 ## Bağlam
 
 Sistem maaş etkiliyor. Asıl risk dışarıdan saldırgan değil; yetkili bir kullanıcının geriye

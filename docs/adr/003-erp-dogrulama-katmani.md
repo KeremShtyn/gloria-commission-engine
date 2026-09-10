@@ -1,7 +1,5 @@
 # ADR-003: ERP prim tabanı değil, doğrulama katmanı
 
-**Durum:** Kabul edildi · 2026-09-10
-
 ## Bağlam
 
 Üç kaynak da satış verisi taşıyor. Soru şu: ERP kayıtları prim tabanına eklenmeli mi, yoksa
