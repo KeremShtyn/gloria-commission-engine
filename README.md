@@ -138,9 +138,9 @@ Dönem özetinde sıralanabilir alanlar: `fullName` (varsayılan), `employeeNo`,
 eşitlikte personel numarası belirleyicidir — sabit bir kırıcı olmadan aynı satır iki sayfada
 görünebilirdi.
 
-Geçersiz parametre sessizce düzeltilmez: beyaz listede olmayan bir sıralama alanı, `size > 100`
-ya da negatif sayfa **400** döner. Sessizce varsayılana düşseydi istemci eksik veriyle
-çalıştığını fark etmezdi.
+Geçersiz parametre sessizce düzeltilmez: beyaz listede olmayan bir sıralama alanı, `1-100`
+aralığı dışında bir `size` ya da negatif `page` **400** döner. Sessizce varsayılana düşseydi
+istemci eksik veriyle çalıştığını fark etmezdi.
 
 Dönem toplamları sayfadan bağımsızdır; `totalSalesBase` ve `totalCommission` her zaman dönemin
 tamamını kapsar, sayfanın değil.
