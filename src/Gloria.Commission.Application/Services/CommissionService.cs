@@ -1,4 +1,5 @@
 using Gloria.Commission.Application.Abstractions;
+using Gloria.Commission.Application.Dtos.Requests;
 using Gloria.Commission.Application.Dtos.Responses;
 using Gloria.Commission.Application.Mappers;
 using Gloria.Commission.Application.Repositories;
@@ -66,15 +67,18 @@ public sealed class CommissionService : ICommissionService
     }
 
     public async Task<PeriodSummaryResponse> GetPeriodSummaryAsync(
-        int year, int month, CancellationToken ct = default)
+        int year, int month, int? page, int? size, string? sort, CancellationToken ct = default)
     {
         RequirePrivileged();
         RequireValidMonth(month);
 
+        // Siralama ve sayfalama once dogrulanir: gecersiz istekte donem bosuna hesaplanmaz.
+        var query = PageQuery.Parse(page, size, sort, Sortable);
+
         var period = await ReadPeriodAsync(year, month, ct);
         var (_, rows) = await CalculateAllAsync(year, month, ct);
 
-        return Summarize(year, month, period.IsClosed, rows);
+        return Summarize(year, month, period.IsClosed, rows, query);
     }
 
     /// <summary>
@@ -127,7 +131,9 @@ public sealed class CommissionService : ICommissionService
 
         await _unitOfWork.SaveChangesAsync(ct);
 
-        return Summarize(year, month, period.IsClosed, rows);
+        // Kayit sonrasi ozet ilk sayfayla doner; cagiran taraf listeyi zaten
+        // GET ucundan sayfalayarak okur.
+        return Summarize(year, month, period.IsClosed, rows, PageQuery.Parse(null, null));
     }
 
     /// <summary>Donemin tum personeli icin hesabi calistirir; veri yazmaz.</summary>
@@ -172,15 +178,63 @@ public sealed class CommissionService : ICommissionService
         return (calculations, rows);
     }
 
+    /// <summary>
+    /// Personel listesinde siralanabilen alanlar. Beyaz liste disindaki bir alan
+    /// varsayilana dusmez, 400 doner (bkz. <see cref="PageQuery"/>).
+    /// </summary>
+    private static readonly string[] Sortable =
+        ["fullName", "employeeNo", "department", "hotel", "totalSalesBase", "totalCommission"];
+
     private static PeriodSummaryResponse Summarize(
-        int year, int month, bool closed, List<EmployeeCommissionResponse> rows) => new()
+        int year, int month, bool closed, List<EmployeeCommissionResponse> rows, PageQuery query) => new()
     {
         Period = Period.Key(year, month),
         Closed = closed,
+        // Toplamlar donemin tamamindan; sayfa degistirmek donem toplamini degistirmez.
         EmployeeCount = rows.Count(r => r.TotalCommission != 0m || r.TotalSalesBase != 0m),
         TotalSalesBase = rows.Sum(r => r.TotalSalesBase),
         TotalCommission = rows.Sum(r => r.TotalCommission),
-        Employees = rows
+        Employees = Paginate(Sort(rows, query), query)
+    };
+
+    /// <summary>
+    /// Ad siralamasi Turkce harf sirasina gore yapilir; ordinal siralamada
+    /// 'Cetin' ile 'Celik' yanlis sirada cikar. Esitlikte personel numarasi
+    /// belirleyicidir: sabit bir kirici olmadan ayni satir iki sayfada gorunebilir.
+    /// </summary>
+    private static List<EmployeeCommissionResponse> Sort(
+        List<EmployeeCommissionResponse> rows, PageQuery query)
+    {
+        var byName = StringComparer.Create(Rules.Culture.Tr, ignoreCase: true);
+
+        IOrderedEnumerable<EmployeeCommissionResponse> ordered = query.SortField switch
+        {
+            "employeeNo" => OrderBy(rows, r => r.EmployeeNo, StringComparer.OrdinalIgnoreCase, query.Descending),
+            "department" => OrderBy(rows, r => r.Department, byName, query.Descending),
+            "hotel" => OrderBy(rows, r => r.Hotel, byName, query.Descending),
+            "totalSalesBase" => OrderBy(rows, r => r.TotalSalesBase, null, query.Descending),
+            "totalCommission" => OrderBy(rows, r => r.TotalCommission, null, query.Descending),
+            _ => OrderBy(rows, r => r.FullName, byName, query.Descending)
+        };
+
+        return ordered.ThenBy(r => r.EmployeeNo, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static IOrderedEnumerable<EmployeeCommissionResponse> OrderBy<TKey>(
+        List<EmployeeCommissionResponse> rows,
+        Func<EmployeeCommissionResponse, TKey> key,
+        IComparer<TKey>? comparer,
+        bool descending)
+        => descending ? rows.OrderByDescending(key, comparer) : rows.OrderBy(key, comparer);
+
+    private static PagedResponse<EmployeeCommissionResponse> Paginate(
+        List<EmployeeCommissionResponse> rows, PageQuery query) => new()
+    {
+        Content = rows.Skip(query.Page * query.Size).Take(query.Size).ToList(),
+        Page = query.Page,
+        Size = query.Size,
+        TotalElements = rows.Count,
+        TotalPages = (int)Math.Ceiling(rows.Count / (double)query.Size)
     };
 
     /// <summary>Personel rolu yalnizca kendi primini goruntuleyebilir.</summary>

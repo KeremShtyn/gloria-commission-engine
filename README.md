@@ -58,9 +58,9 @@ bunlar dosyayı reddettirmez, `import_errors` tablosuna düşer.
 dotnet test
 ```
 
-48 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
-altında; denetim kaydı ve dönem kilidi `PersistenceTests.cs`, yetki kuralı `AuthorizationTests.cs`
-altında.
+59 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
+altında; denetim kaydı ve dönem kilidi `PersistenceTests.cs`, yetki kuralı `AuthorizationTests.cs`,
+sayfalama ve sıralama `PeriodSummaryPagingTests.cs` altında.
 
 ## Kimlik ve yetkilendirme
 
@@ -108,15 +108,42 @@ HTTPS zorunluluğu ve login rate limit ayrıca ele alınmalıdır.
 | Endpoint | Açıklama |
 |---|---|
 | `GET /api/v1/commissions/{yıl}/{ay}/employees/{personelNo}` | Primi hesaplama adımlarıyla döner |
-| `GET /api/v1/commissions/{yıl}/{ay}` | Dönemin tüm personel özeti (canlı hesap, veri yazmaz) |
+| `GET /api/v1/commissions/{yıl}/{ay}` | Dönemin tüm personel özeti — sayfalı (canlı hesap, veri yazmaz) |
 | `POST /api/v1/commissions/{yıl}/{ay}/calculate` | Hesabı çalıştırır ve sonuçları kalıcı kaydeder |
 | `GET /api/v1/commissions/{yıl}/{ay}/reconciliation` | ERP mutabakat raporu |
 | `GET/POST/PUT/DELETE /api/v1/commission-rules` | Kural yönetimi |
 | `POST /api/v1/imports/{pms\|pos\|erp}` | CSV aktarımı |
-| `GET /api/v1/imports/{batchId}/staging` | Bir yüklemenin ham satırları |
-| `GET /api/v1/departments`, `/hotels`, `/product-groups` | Kural kapsamı için referans listeler |
-| `POST /api/v1/periods/{yıl}/{ay}/close` | Dönem kapatma |
-| `GET /api/v1/audit-logs` | Değişiklik geçmişi |
+| `GET /api/v1/imports` | Aktarım geçmişi |
+| `GET /api/v1/imports/{batchId}/staging`, `/errors` | Bir yüklemenin ham ve hatalı satırları |
+| `GET /api/v1/employees`, `/departments`, `/hotels`, `/product-groups` | Referans listeler |
+| `GET /api/v1/periods` | Dönem listesi ve durumları |
+| `POST /api/v1/periods/{yıl}/{ay}/close`, `/reopen` | Dönem kapatma ve yeniden açma (Admin) |
+| `GET /api/v1/audit-logs` | Değişiklik geçmişi — sayfalı |
+| `GET /health` | Sağlık kontrolü (Compose healthcheck bunu kullanır) |
+
+### Sayfalama
+
+Liste dönen uçlar aynı sözleşmeyi kullanır:
+
+```
+GET /api/v1/commissions/2026/8?page=0&size=20&sort=totalCommission,desc
+```
+
+```json
+{ "content": [...], "page": 0, "size": 20, "totalElements": 13, "totalPages": 1 }
+```
+
+Dönem özetinde sıralanabilir alanlar: `fullName` (varsayılan), `employeeNo`, `department`,
+`hotel`, `totalSalesBase`, `totalCommission`. Ad sıralaması Türkçe harf sırasına göre yapılır;
+eşitlikte personel numarası belirleyicidir — sabit bir kırıcı olmadan aynı satır iki sayfada
+görünebilirdi.
+
+Geçersiz parametre sessizce düzeltilmez: beyaz listede olmayan bir sıralama alanı, `size > 100`
+ya da negatif sayfa **400** döner. Sessizce varsayılana düşseydi istemci eksik veriyle
+çalıştığını fark etmezdi.
+
+Dönem toplamları sayfadan bağımsızdır; `totalSalesBase` ve `totalCommission` her zaman dönemin
+tamamını kapsar, sayfanın değil.
 
 ## Ekranlar
 
@@ -128,6 +155,12 @@ açamaz. Açık/koyu tema desteği var, tercih tarayıcıda saklanır.
 |---|---|---|
 | Prim kuralları | Kural listesi; ekleme ve düzenleme modal içinde | Admin yazar, Muhasebe okur |
 | Primim | Dönem primi ve hesabın her adımı | Personel kendini, Admin/Muhasebe herkesi |
+
+Prim ekranı role göre iki farklı şey gösterir. Personel rolünde doğrudan kendi hesabı açılır.
+Admin ve Muhasebe rolünde önce dönemin personel tablosu gelir: sunucu tarafında sayfalanır ve
+sıralanır, satıra tıklayınca o personelin hesap adımları altta açılır. Sayfa, sıralama, dönem
+ve seçili personel adres çubuğunda tutulur — sayfa yenilendiğinde, geri tuşunda ve paylaşılan
+bağlantıda aynı liste açılır.
 
 Prim dışı kalan satışlar da nedeniyle birlikte listelenir; hiçbir kayıt sessizce düşmez.
 

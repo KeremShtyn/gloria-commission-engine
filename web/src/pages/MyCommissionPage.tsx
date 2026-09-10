@@ -1,67 +1,108 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
+import { CommissionGrid } from '../components/CommissionGrid'
 import { PeriodPicker } from '../components/PeriodPicker'
 import { StatSkeleton, TableSkeleton } from '../components/Skeleton'
 import { EXCLUSION_REASON_LABEL } from '../constants'
 import { useSession } from '../context/SessionContext'
-import type { CommissionResultResponse, EmployeeResponse } from '../types'
+import type { CommissionResultResponse, PeriodSummaryResponse } from '../types'
 import { amountClass, formatDateTime, formatMoney, formatPercent } from '../utils/formatters'
+
+const DEFAULT_SORT = 'fullName,asc'
+const DEFAULT_SIZE = 20
 
 export function MyCommissionPage() {
   const { session, canSeeAllEmployees } = useSession()
-  const [params] = useSearchParams()
-
-  const [year, setYear] = useState(Number(params.get('year')) || 2026)
-  const [month, setMonth] = useState(Number(params.get('month')) || 8)
-  const [employeeNo, setEmployeeNo] = useState(
-    params.get('employeeNo') ?? session.employeeNo ?? 'P1001',
-  )
-
-  const [result, setResult] = useState<CommissionResultResponse | null>(null)
-  const [employees, setEmployees] = useState<EmployeeResponse[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-
-  // Personel rolunde baska bir personel sorgulanamaz; kutu kendi numarasina sabitlenir.
-  const locked = !canSeeAllEmployees
-  const target = locked ? (session.employeeNo ?? employeeNo) : employeeNo
-
-  /** Personel rolunde secim yok; kendi adi gosterilir. */
-  const ownLabel = result ? `${result.fullName} — ${result.department}` : target
 
   /*
-   * Personel listesi yalnizca baskasinin primini gorebilen roller icin cekilir.
-   * Personel rolu zaten kendi kaydina kilitli; listeyi getirmek gereksiz olurdu
-   * ve diger calisanlarin adlarini bosuna gosterirdi.
+   * Liste durumu adres cubugunda tutulur: sayfa yenilendiginde, geri tusuna
+   * basildiginda ve baglanti paylasildiginda ayni liste acilir. Bilesen state'inde
+   * tutulsaydi ucu de kaybolurdu.
    */
-  useEffect(() => {
+  const [params, setParams] = useSearchParams()
+
+  const year = Number(params.get('year')) || 2026
+  const month = Number(params.get('month')) || 8
+  const page = Number(params.get('page')) || 0
+  const size = Number(params.get('size')) || DEFAULT_SIZE
+  const sort = params.get('sort') ?? DEFAULT_SORT
+
+  // Personel rolunde baska bir personel sorgulanamaz; secim kendi numarasina sabitlenir.
+  const locked = !canSeeAllEmployees
+  const selected = locked ? (session.employeeNo ?? null) : params.get('employeeNo')
+
+  const [result, setResult] = useState<CommissionResultResponse | null>(null)
+  const [summary, setSummary] = useState<PeriodSummaryResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [gridBusy, setGridBusy] = useState(false)
+
+  /** Personel rolunde secim yok; kendi adi gosterilir. */
+  const ownLabel = result ? `${result.fullName} — ${result.department}` : (selected ?? '')
+
+  const update = useCallback(
+    (changes: Record<string, string | null>) => {
+      const next = new URLSearchParams(params)
+      for (const [key, value] of Object.entries(changes)) {
+        if (value === null) next.delete(key)
+        else next.set(key, value)
+      }
+      setParams(next, { replace: true })
+    },
+    [params, setParams],
+  )
+
+  /*
+   * Donem, siralama ve sayfa boyutu degisince sayfa basa doner. Aksi halde
+   * 5. sayfadayken 12 kisilik bir donem secen kullanici bos bir sayfa gorurdu.
+   */
+  const loadSummary = useCallback(async () => {
     if (locked) return
 
-    api
-      .employees(session)
-      .then((list) =>
-        setEmployees([...list].sort((a, b) => a.fullName.localeCompare(b.fullName, 'tr'))),
-      )
-      .catch(() => setEmployees([]))
-  }, [locked, session])
+    setGridBusy(true)
+    try {
+      // Onceki liste ekranda kalir, yalnizca soldurulur: her sayfa gecisinde
+      // iskelete donmek listeyi titretiyordu.
+      setSummary(await api.periodSummary(session, year, month, { page, size, sort }))
+    } catch (e) {
+      setSummary(null)
+      setError((e as Error).message)
+    } finally {
+      setGridBusy(false)
+    }
+  }, [locked, session, year, month, page, size, sort])
 
-  const load = useCallback(async () => {
+  const loadDetail = useCallback(async () => {
+    if (!selected) {
+      setResult(null)
+      return
+    }
+
     setBusy(true)
     setError(null)
     try {
-      setResult(await api.commission(session, year, month, target))
+      setResult(await api.commission(session, year, month, selected))
     } catch (e) {
       setResult(null)
       setError((e as Error).message)
     } finally {
       setBusy(false)
     }
-  }, [session, year, month, target])
+  }, [session, year, month, selected])
 
   useEffect(() => {
-    void load()
-  }, [load])
+    void loadSummary()
+  }, [loadSummary])
+
+  useEffect(() => {
+    void loadDetail()
+  }, [loadDetail])
+
+  const refresh = () => {
+    void loadSummary()
+    void loadDetail()
+  }
 
   return (
     <>
@@ -79,32 +120,66 @@ export function MyCommissionPage() {
         <PeriodPicker
           year={year}
           month={month}
-          onYearChange={setYear}
-          onMonthChange={setMonth}
-          onRefresh={load}
-          busy={busy}
+          onYearChange={(value) => update({ year: String(value), page: null })}
+          onMonthChange={(value) => update({ month: String(value), page: null })}
+          onRefresh={refresh}
+          busy={busy || gridBusy}
         >
-          <div style={{ minWidth: 260 }}>
-            <label htmlFor="employeeNo">Personel</label>
-
-            {locked ? (
+          {locked && (
+            <div style={{ minWidth: 260 }}>
+              <label htmlFor="employeeNo">Personel</label>
               <input id="employeeNo" value={ownLabel} disabled />
-            ) : (
-              <select
-                id="employeeNo"
-                value={target}
-                onChange={(e) => setEmployeeNo(e.target.value)}
-              >
-                {employees.map((employee) => (
-                  <option key={employee.employeeNo} value={employee.employeeNo}>
-                    {employee.fullName} — {employee.department}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+            </div>
+          )}
         </PeriodPicker>
       </div>
+
+      {!locked && (
+        <>
+          <div className="stat-grid">
+            <div className="stat-card">
+              <span>Dönem</span>
+              <strong style={{ fontSize: 18 }}>{summary?.period ?? '—'}</strong>
+              <small>
+                <span className={summary?.closed ? 'badge warn' : 'badge'}>
+                  {summary?.closed ? 'Kapalı' : 'Açık'}
+                </span>
+              </small>
+            </div>
+            <div className="stat-card">
+              <span>Prim alan personel</span>
+              <strong>{summary?.employeeCount ?? 0}</strong>
+              <small>toplam {summary?.employees.totalElements ?? 0} kayıt</small>
+            </div>
+            <div className="stat-card">
+              <span>Prime esas net ciro</span>
+              <strong>{formatMoney(summary?.totalSalesBase ?? 0)}</strong>
+              <small>dönemin tamamı</small>
+            </div>
+            <div className="stat-card">
+              <span>Toplam prim</span>
+              <strong className="accent">{formatMoney(summary?.totalCommission ?? 0)}</strong>
+              <small>dönemin tamamı</small>
+            </div>
+          </div>
+
+          <CommissionGrid
+            data={summary?.employees ?? null}
+            sort={sort}
+            selected={selected}
+            loading={gridBusy && !summary}
+            fetching={gridBusy}
+            onSortChange={(value) => update({ sort: value, page: null })}
+            onPageChange={(value) => update({ page: String(value) })}
+            onSizeChange={(value) => update({ size: String(value), page: null })}
+            onSelect={(employeeNo) => update({ employeeNo })}
+          />
+        </>
+      )}
+
+      {!locked && !selected && !gridBusy && (
+        <p className="hint">Hesaplama adımlarını görmek için listeden bir personel seçin.</p>
+      )}
 
       {busy && !result && (
         <>
@@ -117,6 +192,7 @@ export function MyCommissionPage() {
 
       {result && (
         <>
+          {locked && (
           <div className="stat-grid">
             <div className="stat-card">
               <span>Personel</span>
@@ -146,10 +222,23 @@ export function MyCommissionPage() {
               <small>{result.steps.length} hesaplama adımı</small>
             </div>
           </div>
+          )}
 
           <div className="card">
-            <h2>Hesaplama adımları ({result.steps.length})</h2>
+            <h2>
+              {locked
+                ? `Hesaplama adımları (${result.steps.length})`
+                : `${result.fullName} — hesaplama adımları (${result.steps.length})`}
+            </h2>
             <p className="hint">
+              {!locked && (
+                <>
+                  {result.employeeNo} · {result.department} · {result.hotel} · dönem primi{' '}
+                  {formatMoney(result.totalCommission)} · hesap{' '}
+                  {formatDateTime(result.calculatedAtUtc)}
+                  <br />
+                </>
+              )}
               Yeşil satırlar kademeli baremde hangi kademenin seçildiğini gösterir; prim tutarı taşımaz.
             </p>
 

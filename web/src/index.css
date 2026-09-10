@@ -628,6 +628,72 @@ th.num {
   white-space: nowrap;
 }
 
+/* Siralanabilir baslik: tiklanabilir alan basligin tamami olsun diye buton hucreyi doldurur. */
+th.sortable {
+  padding: 0;
+}
+
+th.sortable button {
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+th.sortable button:hover {
+  color: var(--text-strong);
+  background: var(--accent-soft);
+}
+
+th.num.sortable button {
+  text-align: right;
+}
+
+tr.row-clickable,
+tr.row-selected {
+  cursor: pointer;
+}
+
+tr.row-selected td {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/*
+ * Yeni sayfa gelirken eski liste yerinde kalir, yalnizca soldurulur.
+ * Iskelete donmek her sayfa gecisinde tabloyu titretiyordu.
+ */
+.table-scroll.is-fetching {
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 14px;
+  font-size: var(--fs-md);
+  color: var(--text-muted);
+}
+
+.pager label {
+  margin: 0;
+}
+
+.pager select {
+  width: auto;
+  min-width: 72px;
+}
+
 /* Negatif tutar iade demek; sayinin isaretine bakmak zorunda kalinmasin. */
 td.negative {
   color: var(--danger-fg);

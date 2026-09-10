@@ -5,6 +5,7 @@ import type {
   CommissionRuleResponse,
   EmployeeResponse,
   LookupResponse,
+  PeriodSummaryResponse,
   UserRole,
 } from '../types'
 
@@ -81,6 +82,24 @@ export const api = {
       session,
       `/api/v1/commissions/${year}/${month}/employees/${employeeNo}`,
     ),
+
+  /**
+   * Donemin personel listesi. Sayfalama ve siralama sunucuda yapilir:
+   * liste buyudugunde tamamini cekip tarayicida kesmek olcegi tasimazdi.
+   */
+  periodSummary: (
+    session: Session,
+    year: number,
+    month: number,
+    options: { page: number; size: number; sort: string },
+  ) => {
+    const query = new URLSearchParams({
+      page: String(options.page),
+      size: String(options.size),
+      sort: options.sort,
+    })
+    return get<PeriodSummaryResponse>(session, `/api/v1/commissions/${year}/${month}?${query}`)
+  },
 
   // --- Referans ---
   employees: (session: Session) => get<EmployeeResponse[]>(session, '/api/v1/employees'),

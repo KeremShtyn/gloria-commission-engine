@@ -20,8 +20,12 @@ public interface ICommissionService
     Task<CommissionResultResponse> GetForEmployeeAsync(
         int year, int month, string employeeNo, CancellationToken ct = default);
 
-    /// <summary>Donemin tum personel ozetini hesaplar ve dondurur. Veri yazmaz.</summary>
-    Task<PeriodSummaryResponse> GetPeriodSummaryAsync(int year, int month, CancellationToken ct = default);
+    /// <summary>
+    /// Donemin tum personel ozetini hesaplar ve dondurur. Veri yazmaz.
+    /// Personel listesi sayfalidir; donem toplamlari sayfadan bagimsizdir.
+    /// </summary>
+    Task<PeriodSummaryResponse> GetPeriodSummaryAsync(
+        int year, int month, int? page, int? size, string? sort, CancellationToken ct = default);
 
     /// <summary>
     /// Donemi hesaplar ve sonuclari adimlariyla kalici hale getirir.

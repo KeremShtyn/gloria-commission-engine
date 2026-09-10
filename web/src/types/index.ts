@@ -86,6 +86,35 @@ export interface CommissionResultResponse {
   excludedSales: ExcludedSaleResponse[]
 }
 
+export interface EmployeeCommissionResponse {
+  employeeId: string
+  employeeNo: string
+  fullName: string
+  department: string
+  hotel: string
+  totalSalesBase: number
+  totalCommission: number
+}
+
+/** Sayfali liste cevabi; API'de tum listeler bu bicimde doner. */
+export interface PagedResponse<T> {
+  content: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export interface PeriodSummaryResponse {
+  period: string
+  closed: boolean
+  employeeCount: number
+  totalSalesBase: number
+  totalCommission: number
+  /** Sayfali; yukaridaki toplamlar sayfanin degil donemin tamamininkidir. */
+  employees: PagedResponse<EmployeeCommissionResponse>
+}
+
 export interface EmployeeResponse {
   id: string
   employeeNo: string

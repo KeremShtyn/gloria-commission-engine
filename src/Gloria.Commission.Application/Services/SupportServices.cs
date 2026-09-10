@@ -1,3 +1,4 @@
+using Gloria.Commission.Application.Dtos.Requests;
 using Gloria.Commission.Application.Dtos.Responses;
 using Gloria.Commission.Application.Mappers;
 using Gloria.Commission.Application.Repositories;
@@ -67,9 +68,6 @@ public sealed class ReconciliationService : IReconciliationService
 
 public sealed class AuditLogService : IAuditLogService
 {
-    private const int DefaultPageSize = 20;
-    private const int MaxPageSize = 100;
-
     private readonly IAuditLogRepository _auditLogs;
     private readonly Abstractions.ICurrentUser _currentUser;
 
@@ -85,18 +83,18 @@ public sealed class AuditLogService : IAuditLogService
         if (!_currentUser.CanSeeAllEmployees)
             throw new DomainException("FORBIDDEN", "Denetim kayitlari icin Admin veya Muhasebe rolu gerekir.");
 
-        var pageSize = size is null or <= 0 or > MaxPageSize ? DefaultPageSize : size.Value;
-        var pageIndex = page is null or < 0 ? 0 : page.Value;
+        // Sayfa dogrulamasi tum listelerde ayni: gecersiz deger duzeltilmez, 400 doner.
+        var query = PageQuery.Parse(page, size);
 
-        var (items, total) = await _auditLogs.SearchAsync(entityName, entityId, pageIndex, pageSize, ct);
+        var (items, total) = await _auditLogs.SearchAsync(entityName, entityId, query.Page, query.Size, ct);
 
         return new PagedResponse<AuditLogResponse>
         {
             Content = items.Select(AuditLogMapper.ToResponse).ToList(),
-            Page = pageIndex,
-            Size = pageSize,
+            Page = query.Page,
+            Size = query.Size,
             TotalElements = total,
-            TotalPages = (int)Math.Ceiling(total / (double)pageSize)
+            TotalPages = (int)Math.Ceiling(total / (double)query.Size)
         };
     }
 }

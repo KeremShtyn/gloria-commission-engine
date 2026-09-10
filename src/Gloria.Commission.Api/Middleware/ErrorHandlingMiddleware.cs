@@ -8,7 +8,8 @@ namespace Gloria.Commission.Api.Middleware;
 /// Tum hatalari tek bir cevap formatinda dondurur:
 /// { "error": { "code", "message", "correlationId", "timestamp", "path" } }
 ///
-/// Is kurali ihlali 422, yetki hatasi 403, bulunamadi 404, cakisma 409, digerleri 500.
+/// Is kurali ihlali 422, gecersiz sorgu parametresi 400, yetki hatasi 403,
+/// bulunamadi 404, cakisma 409, digerleri 500.
 /// Beklenmeyen hatalarda ic detay istemciye sizmaz; korelasyon kimligi ile loga baglanir.
 /// </summary>
 public sealed class ErrorHandlingMiddleware
@@ -49,6 +50,7 @@ public sealed class ErrorHandlingMiddleware
     private static int StatusFor(string code) => code switch
     {
         "FORBIDDEN" => StatusCodes.Status403Forbidden,
+        "INVALID_QUERY" => StatusCodes.Status400BadRequest,
         "CONCURRENT_UPDATE" => StatusCodes.Status409Conflict,
         var c when c.EndsWith("_NOT_FOUND", StringComparison.Ordinal) => StatusCodes.Status404NotFound,
         var c when c.EndsWith("_EXISTS", StringComparison.Ordinal) => StatusCodes.Status409Conflict,

@@ -37,14 +37,24 @@ public class CommissionsController : ControllerBase
         int year, int month, string employeeNo, CancellationToken ct)
         => Ok(await _commissionService.GetForEmployeeAsync(year, month, employeeNo, ct));
 
-    /// <summary>Donemin tum personel ozeti. Admin veya Muhasebe rolu gerekir.</summary>
+    /// <summary>
+    /// Donemin tum personel ozeti. Admin veya Muhasebe rolu gerekir.
+    /// Personel listesi sayfalidir: <c>?page=0&amp;size=20&amp;sort=totalCommission,desc</c>.
+    /// Siralanabilir alanlar: fullName, employeeNo, department, hotel, totalSalesBase,
+    /// totalCommission. Donem toplamlari sayfadan bagimsiz, tum personeli kapsar.
+    /// </summary>
     [HttpGet("{year:int}/{month:int}")]
     [Authorize(Policy = Policies.CanSeeAllEmployees)]
     [ProducesResponseType(typeof(PeriodSummaryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PeriodSummaryResponse>> GetPeriodSummary(
-        int year, int month, CancellationToken ct)
-        => Ok(await _commissionService.GetPeriodSummaryAsync(year, month, ct));
+        int year, int month,
+        [FromQuery] int? page,
+        [FromQuery] int? size,
+        [FromQuery] string? sort,
+        CancellationToken ct)
+        => Ok(await _commissionService.GetPeriodSummaryAsync(year, month, page, size, sort, ct));
 
     /// <summary>
     /// Donemi hesaplar ve sonuclari adimlariyla kaydeder.

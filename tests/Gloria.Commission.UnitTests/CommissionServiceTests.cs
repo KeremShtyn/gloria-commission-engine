@@ -48,7 +48,7 @@ public class CommissionServiceTests : IDisposable
         using var db = NewContext();
         var service = NewService(db);
 
-        var summary = await service.GetPeriodSummaryAsync(2026, 8);
+        var summary = await service.GetPeriodSummaryAsync(2026, 8, null, null, null);
 
         summary.TotalCommission.Should().Be(600m);
 

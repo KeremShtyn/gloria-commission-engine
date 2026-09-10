@@ -62,7 +62,12 @@ public sealed record PeriodSummaryResponse
     public int EmployeeCount { get; init; }
     public decimal TotalSalesBase { get; init; }
     public decimal TotalCommission { get; init; }
-    public IReadOnlyList<EmployeeCommissionResponse> Employees { get; init; } = [];
+
+    /// <summary>
+    /// Personel listesi sayfalidir; yukaridaki toplamlar sayfanin degil
+    /// donemin tamamininkidir. Aksi halde sayfa degistikce "donem toplami" degisirdi.
+    /// </summary>
+    public PagedResponse<EmployeeCommissionResponse> Employees { get; init; } = new();
 }
 
 public sealed record EmployeeCommissionResponse
