@@ -72,9 +72,9 @@ app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CommissionDbContext>();
-    var seedPath = Path.Combine(app.Environment.ContentRootPath, "..", "..", "sample-data", "personel.csv");
-    await DbSeeder.SeedAsync(db, Path.GetFullPath(seedPath));
+    await DbSeeder.SeedAsync(db, ResolvePersonnelSeedPath(app));
 }
+
 
 app.MapRuleEndpoints();
 app.MapCommissionEndpoints();
@@ -83,6 +83,25 @@ app.MapPeriodEndpoints();
 app.MapReferenceEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" })).ExcludeFromDescription();
+
+
+// Seed dosyasi gelistirmede repo kokunde, konteynerde uygulama klasorunde bulunur.
+static string? ResolvePersonnelSeedPath(WebApplication app)
+{
+    var configured = app.Configuration["Seed:PersonnelCsvPath"];
+    if (!string.IsNullOrWhiteSpace(configured) && File.Exists(configured)) return configured;
+
+    var root = app.Environment.ContentRootPath;
+
+    string[] candidates =
+    [
+        Path.Combine(root, "sample-data", "personel.csv"),
+        Path.Combine(root, "..", "..", "sample-data", "personel.csv"),
+        Path.Combine(root, "..", "..", "..", "sample-data", "personel.csv")
+    ];
+
+    return candidates.Select(Path.GetFullPath).FirstOrDefault(File.Exists);
+}
 
 app.Run();
 
