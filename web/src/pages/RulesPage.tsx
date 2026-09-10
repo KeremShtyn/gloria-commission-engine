@@ -88,16 +88,18 @@ export function RulesPage() {
             uygulamanın yeniden derlenmesi gerekmez.
           </p>
         </div>
-        <button className="primary" onClick={() => setEditing({ rule: null })} disabled={!isAdmin}>
-          + Yeni kural
-        </button>
+        {isAdmin && (
+          <button className="primary" onClick={() => setEditing({ rule: null })}>
+            + Yeni kural
+          </button>
+        )}
       </div>
 
       {error && <div className="alert error">{error}</div>}
       {notice && <div className="alert info">{notice}</div>}
       {!isAdmin && (
         <div className="alert info">
-          Kural yönetimi Admin rolüne açıktır. Mevcut rolünüzle kurallar yalnızca görüntülenebilir.
+          Kural yönetimi Admin rolüne açıktır; bu sayfa sizin için salt okunurdur.
         </div>
       )}
 
@@ -158,13 +160,11 @@ export function RulesPage() {
                     <button onClick={() => setEditing({ rule })}>
                       {isAdmin ? 'Düzenle' : 'Detay'}
                     </button>
-                    <button
-                      className="danger"
-                      onClick={() => deactivate(rule)}
-                      disabled={!isAdmin || !rule.isActive}
-                    >
-                      Pasife al
-                    </button>
+                    {isAdmin && rule.isActive && (
+                      <button className="danger" onClick={() => deactivate(rule)}>
+                        Pasife al
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

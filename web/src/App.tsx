@@ -1,13 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
+import { RequireRole } from './components/RequireRole'
 import { SessionProvider } from './context/SessionContext'
-import { AuditLogPage } from './pages/AuditLogPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { ImportsPage } from './pages/ImportsPage'
-import { MyCommissionPage } from './pages/MyCommissionPage'
-import { PeriodSummaryPage } from './pages/PeriodSummaryPage'
-import { PeriodsPage } from './pages/PeriodsPage'
-import { RulesPage } from './pages/RulesPage'
+import { APP_ROUTES } from './navigation'
 
 export default function App() {
   return (
@@ -15,13 +10,16 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="primim" element={<MyCommissionPage />} />
-            <Route path="donem-ozeti" element={<PeriodSummaryPage />} />
-            <Route path="kurallar" element={<RulesPage />} />
-            <Route path="aktarim" element={<ImportsPage />} />
-            <Route path="donemler" element={<PeriodsPage />} />
-            <Route path="denetim" element={<AuditLogPage />} />
+            {APP_ROUTES.map((route) => {
+              const element = <RequireRole roles={route.roles}>{route.element}</RequireRole>
+
+              return route.path === '/' ? (
+                <Route key={route.path} index element={element} />
+              ) : (
+                <Route key={route.path} path={route.path.slice(1)} element={element} />
+              )
+            })}
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

@@ -5,7 +5,7 @@ import type { PeriodResponse } from '../types'
 import { formatDateTime } from '../utils/formatters'
 
 export function PeriodsPage() {
-  const { session, isAdmin } = useSession()
+  const { session } = useSession()
 
   const [periods, setPeriods] = useState<PeriodResponse[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -53,9 +53,6 @@ export function PeriodsPage() {
 
       {error && <div className="alert error">{error}</div>}
       {notice && <div className="alert info">{notice}</div>}
-      {!isAdmin && (
-        <div className="alert info">Dönem kapatma ve açma Admin rolüne açıktır.</div>
-      )}
 
       <div className="card">
         <h2>Dönem listesi ({periods.length})</h2>
@@ -86,7 +83,7 @@ export function PeriodsPage() {
                   <td>{period.closedBy ?? '—'}</td>
                   <td>{formatDateTime(period.closedAtUtc)}</td>
                   <td className="num">
-                    <button onClick={() => toggle(period)} disabled={!isAdmin}>
+                    <button onClick={() => toggle(period)}>
                       {period.status === 'Closed' ? 'Yeniden aç' : 'Dönemi kapat'}
                     </button>
                   </td>

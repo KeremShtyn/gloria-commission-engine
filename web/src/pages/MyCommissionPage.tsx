@@ -46,7 +46,10 @@ export function MyCommissionPage() {
     <>
       <div className="page-head">
         <h1>{locked ? 'Primim' : 'Personel primi'}</h1>
-        <p>Hesap; hangi satış, hangi kural, hangi oran ve ara toplamlar bilgisiyle gösterilir.</p>
+        <p>
+          Hesap; hangi satış, hangi kural, hangi oran ve ara toplamlar bilgisiyle gösterilir.
+          {locked && ' Personel rolünde yalnızca kendi priminiz görüntülenir.'}
+        </p>
       </div>
 
       {error && <div className="alert error">{error}</div>}

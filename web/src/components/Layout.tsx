@@ -1,30 +1,16 @@
-import { useEffect, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { ROLE_LABEL } from '../constants'
 import { useSession } from '../context/SessionContext'
+import { landingFor, routesFor } from '../navigation'
 import type { EmployeeResponse, UserRole } from '../types'
 
-interface NavItem {
-  to: string
-  label: string
-  /** Menude gorunmesi icin gereken yetki; bos ise herkese acik. */
-  requires?: 'admin' | 'allEmployees'
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { to: '/', label: 'Genel bakış', requires: 'allEmployees' },
-  { to: '/primim', label: 'Primim' },
-  { to: '/donem-ozeti', label: 'Dönem özeti', requires: 'allEmployees' },
-  { to: '/kurallar', label: 'Prim kuralları' },
-  { to: '/aktarim', label: 'Veri aktarımı', requires: 'allEmployees' },
-  { to: '/donemler', label: 'Dönemler' },
-  { to: '/denetim', label: 'Denetim', requires: 'allEmployees' },
-]
-
 export function Layout() {
-  const { session, setUserId, setRole, setEmployeeNo, canSeeAllEmployees, isAdmin } = useSession()
+  const { session, setUserId, setRole, setEmployeeNo } = useSession()
   const [employees, setEmployees] = useState<EmployeeResponse[]>([])
+  const navigate = useNavigate()
+  const previousRole = useRef(session.role)
 
   useEffect(() => {
     api
@@ -33,11 +19,20 @@ export function Layout() {
       .catch(() => setEmployees([]))
   }, [session.userId])
 
-  const visible = NAV_ITEMS.filter((item) => {
-    if (item.requires === 'admin') return isAdmin
-    if (item.requires === 'allEmployees') return canSeeAllEmployees
-    return true
-  })
+  /*
+   * Rol degisince o rolun acilis sayfasina donulur. Aksi halde kullanici
+   * onceki rolun sayfasinda, onceki rolun verisiyle kalir; yetkisi kalmadiysa
+   * da yonlendirme sayfa icinde gerceklesir ve bir an eski icerik gorunur.
+   */
+  useEffect(() => {
+    if (previousRole.current === session.role) return
+
+    previousRole.current = session.role
+    navigate(landingFor(session.role), { replace: true })
+  }, [session.role, navigate])
+
+  // Menu ile rota korumasi ayni listeden beslenir; ayrisamazlar.
+  const visible = routesFor(session.role)
 
   return (
     <div className="app">
@@ -51,14 +46,14 @@ export function Layout() {
         </div>
 
         <nav>
-          {visible.map((item) => (
+          {visible.map((route) => (
             <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
+              key={route.path}
+              to={route.path}
+              end={route.path === '/'}
               className={({ isActive }) => (isActive ? 'active' : undefined)}
             >
-              {item.label}
+              {route.label}
             </NavLink>
           ))}
         </nav>
@@ -104,7 +99,11 @@ export function Layout() {
       </div>
 
       <main>
-        <Outlet />
+        {/*
+          Kimlik degisince sayfalar bastan kurulur: onceki rolden kalan yuklenmis veri,
+          filtre ve bildirim mesaji temizlenir.
+        */}
+        <Outlet key={`${session.role}-${session.employeeNo ?? ''}`} />
       </main>
     </div>
   )
