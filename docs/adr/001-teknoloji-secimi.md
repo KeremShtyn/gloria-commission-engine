@@ -17,9 +17,18 @@ Minimal API kullanıldı; endpoint sayısı az ve hepsi ince.
 ## Sonuçlar
 
 SQLite dosya tabanlı olduğu için `docker compose up` dışında kurulum gerektirmiyor,
-değerlendirici tek komutla çalıştırabiliyor. Karşılığında eşzamanlı yazma sınırlı —
-tek kullanıcılı bir case için sorun değil, üretimde SQL Server'a geçilir.
-Şema ve indeksler taşınabilir; değişen tek şey EF Core sağlayıcısı.
+değerlendirici tek komutla çalıştırabiliyor.
+
+Bunun bedeli var ve üretime taşırken bilinmeli:
+
+- **Eşzamanlı yazma sınırlı.** SQLite yazarken veritabanını kilitliyor. Gecelik ETL koşarken
+  personel ekranı açıksa çakışır.
+- **`decimal` kolonlar TEXT olarak yatıyor.** EF Core'un SQLite sağlayıcısında `HasPrecision`
+  etkisiz. Eşitlik ve bellekte toplama sorunsuz ama `ORDER BY tutar` sözlük sırası verir —
+  para üzerinde SQL tarafında sıralama yapan bir sorgu sessizce yanlış sonuç döndürür.
+
+Üretimde SQL Server'a geçilir. Entity'ler, EF konfigürasyonları ve indeksler olduğu gibi taşınır;
+migration'lar sağlayıcıya özgü olduğu için yeniden üretilmesi gerekir.
 
 SDK'yı sabitlemek, makinesinde .NET 9 olan birinde de aynı derlemenin çıkmasını sağlıyor.
 
