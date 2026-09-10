@@ -8,6 +8,16 @@ import { formatMoney, formatPercent } from '../utils/formatters'
 
 type Editing = { rule: CommissionRuleResponse | null } | null
 
+/** Kapsam alanlarini ayri rozetlere boler; nokta ile birlestirilmis metin okunmuyordu. */
+const scopeChips = (rule: CommissionRuleResponse) =>
+  [
+    rule.sourceSystem,
+    rule.productGroupCode,
+    rule.productCode,
+    rule.departmentCode,
+    rule.hotelCode,
+  ].filter((value): value is string => Boolean(value))
+
 export function RulesPage() {
   const { session, isAdmin } = useSession()
 
@@ -114,23 +124,23 @@ export function RulesPage() {
             <tbody>
               {rules.map((rule) => (
                 <tr key={rule.id} className={rule.isActive ? undefined : 'inactive'}>
-                  <td>
-                    <strong>{rule.code}</strong>
-                  </td>
+                  <td className="cell-title">{rule.code}</td>
                   <td>{rule.name}</td>
                   <td>{RULE_TYPE_LABEL[rule.ruleType]}</td>
                   <td>
-                    {[
-                      rule.sourceSystem,
-                      rule.productGroupCode,
-                      rule.productCode,
-                      rule.departmentCode,
-                      rule.hotelCode,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ') || 'Tüm satışlar'}
+                    {scopeChips(rule).length > 0 ? (
+                      <div className="chip-row">
+                        {scopeChips(rule).map((chip) => (
+                          <span key={chip} className="badge muted">
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="muted">Tüm satışlar</span>
+                    )}
                   </td>
-                  <td className="num">
+                  <td className="num strong">
                     {rule.ruleType === 'Percentage' && rule.rate != null && formatPercent(rule.rate)}
                     {rule.ruleType === 'FixedAmount' &&
                       rule.fixedAmount != null &&

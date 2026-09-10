@@ -142,9 +142,9 @@ export function ImportsPage() {
                   <td>
                     <span className="badge">{SOURCE_LABEL[batch.sourceSystem] ?? batch.sourceSystem}</span>
                   </td>
-                  <td>{batch.fileName}</td>
+                  <td className="cell-title">{batch.fileName}</td>
                   <td className="num">{batch.totalRows}</td>
-                  <td className="num">{batch.importedRows}</td>
+                  <td className="num strong">{batch.importedRows}</td>
                   <td className="num">{batch.duplicateRows}</td>
                   <td className="num">
                     {batch.failedRows > 0 ? (
@@ -207,7 +207,7 @@ export function ImportsPage() {
                       <td>
                         <span className="badge warn">{row.errorCode}</span>
                       </td>
-                      <td>{row.errorMessage}</td>
+                      <td className="note">{row.errorMessage}</td>
                       <td className="mono">{row.rawLine}</td>
                     </tr>
                   ))}

@@ -5,7 +5,7 @@ import { PeriodPicker } from '../components/PeriodPicker'
 import { EXCLUSION_REASON_LABEL } from '../constants'
 import { useSession } from '../context/SessionContext'
 import type { CommissionResultResponse } from '../types'
-import { formatMoney, formatPercent } from '../utils/formatters'
+import { amountClass, formatMoney, formatPercent } from '../utils/formatters'
 
 export function MyCommissionPage() {
   const { session, canSeeAllEmployees } = useSession()
@@ -136,18 +136,29 @@ export function MyCommissionPage() {
                         <strong>{step.ruleCode}</strong>
                       </td>
                       <td>
-                        {step.sourceDocumentNo ? `${step.sourceSystem} · ${step.sourceDocumentNo}` : '—'}
-                        {step.productName && <div className="muted">{step.productName}</div>}
+                        {step.sourceDocumentNo ? (
+                          <>
+                            <div className="cell-title">{step.sourceDocumentNo}</div>
+                            <div className="cell-sub">
+                              {step.sourceSystem}
+                              {step.productName ? ` · ${step.productName}` : ''}
+                            </div>
+                          </>
+                        ) : (
+                          '—'
+                        )}
                       </td>
                       <td>{step.transactionDate ?? '—'}</td>
-                      <td className="num">{formatMoney(step.baseAmount)}</td>
+                      <td className={amountClass(step.baseAmount)}>{formatMoney(step.baseAmount)}</td>
                       <td className="num">
                         {step.appliedRate != null && formatPercent(step.appliedRate)}
                         {step.appliedFixedAmount != null && formatMoney(step.appliedFixedAmount)}
                         {step.appliedRate == null && step.appliedFixedAmount == null && '—'}
                       </td>
-                      <td className="num">{formatMoney(step.commissionAmount)}</td>
-                      <td className="muted">{step.explanation}</td>
+                      <td className={`${amountClass(step.commissionAmount)} strong`}>
+                        {formatMoney(step.commissionAmount)}
+                      </td>
+                      <td className="note">{step.explanation}</td>
                     </tr>
                   ))}
                   {result.steps.length === 0 && (
@@ -196,17 +207,18 @@ export function MyCommissionPage() {
                     {result.excludedSales.map((sale) => (
                       <tr key={`${sale.sourceSystem}-${sale.sourceDocumentNo}`}>
                         <td>
-                          {sale.sourceSystem} · {sale.sourceDocumentNo}
+                          <div className="cell-title">{sale.sourceDocumentNo}</div>
+                          <div className="cell-sub">{sale.sourceSystem}</div>
                         </td>
                         <td>{sale.transactionDate}</td>
                         <td>{sale.productName}</td>
-                        <td className="num">{formatMoney(sale.amountTry)}</td>
+                        <td className={amountClass(sale.amountTry)}>{formatMoney(sale.amountTry)}</td>
                         <td>
                           <span className="badge warn">
                             {EXCLUSION_REASON_LABEL[sale.reasonCode] ?? sale.reasonCode}
                           </span>
                         </td>
-                        <td className="muted">{sale.reason}</td>
+                        <td className="note">{sale.reason}</td>
                       </tr>
                     ))}
                   </tbody>

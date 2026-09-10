@@ -10,3 +10,9 @@ export const formatPercent = (rate: number) => percent.format(rate)
 
 export const formatDateTime = (value: string | null | undefined) =>
   value ? dateTime.format(new Date(value)) : '—'
+
+/**
+ * Tutar hücresinin sınıfı. Negatif tutar iade demek; okuyanın sayının
+ * işaretine bakmak zorunda kalmaması için ayrı renklendirilir.
+ */
+export const amountClass = (value: number) => (value < 0 ? 'num negative' : 'num')

@@ -4,7 +4,7 @@ import { api } from '../api/client'
 import { PeriodPicker } from '../components/PeriodPicker'
 import { useSession } from '../context/SessionContext'
 import type { ImportBatchResponse, PeriodSummaryResponse, ReconciliationResponse } from '../types'
-import { formatDateTime, formatMoney } from '../utils/formatters'
+import { amountClass, formatDateTime, formatMoney } from '../utils/formatters'
 
 export function DashboardPage() {
   const { session } = useSession()
@@ -111,11 +111,15 @@ export function DashboardPage() {
                 {topEarners.map((employee) => (
                   <tr key={employee.employeeNo}>
                     <td>
-                      <strong>{employee.fullName}</strong>
-                      <div className="muted">{employee.employeeNo}</div>
+                      <div className="cell-title">{employee.fullName}</div>
+                      <div className="cell-sub">{employee.employeeNo}</div>
                     </td>
-                    <td>{employee.department}</td>
-                    <td className="num">{formatMoney(employee.totalCommission)}</td>
+                    <td>
+                      <span className="badge muted">{employee.department}</span>
+                    </td>
+                    <td className={`${amountClass(employee.totalCommission)} strong`}>
+                      {formatMoney(employee.totalCommission)}
+                    </td>
                   </tr>
                 ))}
                 {topEarners.length === 0 && (
@@ -150,10 +154,16 @@ export function DashboardPage() {
               <tbody>
                 {(reconciliation?.groups ?? []).map((group) => (
                   <tr key={group.productGroup}>
-                    <td>{group.productGroup}</td>
-                    <td className="num">{formatMoney(group.operationalRevenue)}</td>
-                    <td className="num">{formatMoney(group.accountedRevenue)}</td>
-                    <td className="num">{formatMoney(group.difference)}</td>
+                    <td className="cell-title">{group.productGroup}</td>
+                    <td className={amountClass(group.operationalRevenue)}>
+                      {formatMoney(group.operationalRevenue)}
+                    </td>
+                    <td className={amountClass(group.accountedRevenue)}>
+                      {formatMoney(group.accountedRevenue)}
+                    </td>
+                    <td className={`${amountClass(group.difference)} strong`}>
+                      {formatMoney(group.difference)}
+                    </td>
                   </tr>
                 ))}
                 {(reconciliation?.groups.length ?? 0) === 0 && (
@@ -197,10 +207,12 @@ export function DashboardPage() {
                   <td>
                     <span className="badge">{batch.sourceSystem}</span>
                   </td>
-                  <td>{batch.fileName}</td>
-                  <td className="num">{batch.importedRows}</td>
+                  <td className="cell-title">{batch.fileName}</td>
+                  <td className="num strong">{batch.importedRows}</td>
                   <td className="num">{batch.duplicateRows}</td>
-                  <td className="num">{batch.failedRows}</td>
+                  <td className="num">
+                    {batch.failedRows > 0 ? <span className="badge warn">{batch.failedRows}</span> : 0}
+                  </td>
                   <td>{batch.importedBy}</td>
                   <td>{formatDateTime(batch.startedAtUtc)}</td>
                 </tr>

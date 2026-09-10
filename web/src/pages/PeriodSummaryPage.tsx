@@ -4,7 +4,7 @@ import { api } from '../api/client'
 import { PeriodPicker } from '../components/PeriodPicker'
 import { useSession } from '../context/SessionContext'
 import type { PeriodSummaryResponse } from '../types'
-import { formatMoney } from '../utils/formatters'
+import { amountClass, formatMoney } from '../utils/formatters'
 
 export function PeriodSummaryPage() {
   const { session } = useSession()
@@ -101,14 +101,18 @@ export function PeriodSummaryPage() {
                   {rows.map((employee) => (
                     <tr key={employee.employeeNo}>
                       <td>
-                        <strong>{employee.fullName}</strong>
-                        <div className="muted">{employee.employeeNo}</div>
+                        <div className="cell-title">{employee.fullName}</div>
+                        <div className="cell-sub">{employee.employeeNo}</div>
                       </td>
-                      <td>{employee.department}</td>
+                      <td>
+                        <span className="badge muted">{employee.department}</span>
+                      </td>
                       <td>{employee.hotel}</td>
-                      <td className="num">{formatMoney(employee.totalSalesBase)}</td>
-                      <td className="num">
-                        <strong>{formatMoney(employee.totalCommission)}</strong>
+                      <td className={amountClass(employee.totalSalesBase)}>
+                        {formatMoney(employee.totalSalesBase)}
+                      </td>
+                      <td className={`${amountClass(employee.totalCommission)} strong`}>
+                        {formatMoney(employee.totalCommission)}
                       </td>
                       <td className="num">
                         <button
