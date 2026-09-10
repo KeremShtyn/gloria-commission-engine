@@ -64,6 +64,11 @@ public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
             // Modified olarak isaretlenmis ama hicbir alani degismemis kayit icin log uretme.
             if (action == AuditAction.Update && oldValues is null) continue;
 
+            // Ice aktarilan satislarin kaynagi zaten import_batches'te tutuluyor.
+            // Her satir icin ayrica Create logu yazmak denetim kaydini okunamaz hale getirir;
+            // izlenmesi gereken sey aktarimdan sonraki degisikliklerdir.
+            if (action == AuditAction.Create && entry.Entity is SaleRecord) continue;
+
             logs.Add(new AuditLog
             {
                 EntityName = entry.Entity.GetType().Name,

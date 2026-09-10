@@ -58,8 +58,8 @@ bunlar dosyayı reddettirmez, `import_errors` tablosuna düşer.
 dotnet test
 ```
 
-33 birim testi var. Kademeli barem ve iade senaryoları
-`tests/Gloria.Commission.UnitTests/TieredRuleTests.cs` ve `RefundTests.cs` altında.
+37 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
+altında; denetim kaydı ve dönem kilidi `PersistenceTests.cs` altında (SQLite in-memory).
 
 ## Yetkilendirme
 

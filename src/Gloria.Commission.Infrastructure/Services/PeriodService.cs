@@ -53,9 +53,18 @@ public sealed class PeriodService : IPeriodService
     {
         RequireAdmin();
 
-        var period = await _db.Periods.FirstOrDefaultAsync(p => p.Year == year && p.Month == month, ct)
-                     ?? throw new DomainException("PERIOD_NOT_FOUND",
-                         $"{Period.Key(year, month)} donemi yok; once hesaplama calistirilmali.");
+        if (month is < 1 or > 12)
+            throw new DomainException("INVALID_PERIOD", $"Ay degeri 1-12 araliginda olmali: {month}");
+
+        // Donem kaydi normalde ilk hesaplamada olusur. Hic hesaplanmamis bir ayi kapatmak da
+        // gecerli bir islem: "bu aya artik yazma" demek, bu yuzden kayit burada da yaratilir.
+        var period = await _db.Periods.FirstOrDefaultAsync(p => p.Year == year && p.Month == month, ct);
+
+        if (period is null)
+        {
+            period = new Period { Year = year, Month = month, Status = PeriodStatus.Open };
+            _db.Periods.Add(period);
+        }
 
         if (period.IsClosed)
             throw new DomainException("PERIOD_ALREADY_CLOSED", $"{period} donemi zaten kapali.");

@@ -20,6 +20,10 @@ builder.Services.AddScoped<ICurrentUser, HeaderCurrentUser>();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+
+    // Enum'lar sayi degil isim olarak tasinir: "Percentage", "Pms".
+    // Hem cevaplar okunabilir olur hem de istemci sayi eslesmelerini bilmek zorunda kalmaz.
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 builder.Services.AddEndpointsApiExplorer();

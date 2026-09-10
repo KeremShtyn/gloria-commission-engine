@@ -30,15 +30,15 @@ public static class PeriodEndpoints
         var audit = app.MapGroup("/api/v1/audit-logs").WithTags("Denetim");
 
         audit.MapGet("/", async (
-                string? entityName, string? entityId, int page, int size,
+                string? entityName, string? entityId, int? page, int? size,
                 CommissionDbContext db, Gloria.Commission.Application.Abstractions.ICurrentUser currentUser,
                 CancellationToken ct) =>
             {
                 if (!currentUser.CanSeeAllEmployees)
                     throw new DomainException("FORBIDDEN", "Denetim kayitlari icin Admin veya Muhasebe rolu gerekir.");
 
-                size = size is <= 0 or > 100 ? 20 : size;
-                page = page < 0 ? 0 : page;
+                var pageSize = size is null or <= 0 or > 100 ? 20 : size.Value;
+                var pageIndex = page is null or < 0 ? 0 : page.Value;
 
                 var query = db.AuditLogs.AsNoTracking().AsQueryable();
 
@@ -52,7 +52,7 @@ public static class PeriodEndpoints
 
                 var items = await query
                     .OrderByDescending(a => a.ChangedAtUtc).ThenByDescending(a => a.Id)
-                    .Skip(page * size).Take(size)
+                    .Skip(pageIndex * pageSize).Take(pageSize)
                     .Select(a => new AuditLogDto
                     {
                         Id = a.Id,
@@ -70,10 +70,10 @@ public static class PeriodEndpoints
                 return Results.Ok(new
                 {
                     content = items,
-                    page,
-                    size,
+                    page = pageIndex,
+                    size = pageSize,
                     totalElements = total,
-                    totalPages = (int)Math.Ceiling(total / (double)size)
+                    totalPages = (int)Math.Ceiling(total / (double)pageSize)
                 });
             })
             .WithSummary("Kural ve satis kayitlarindaki degisiklik gecmisi");

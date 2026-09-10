@@ -17,8 +17,11 @@ RUN dotnet publish src/Gloria.Commission.Api/Gloria.Commission.Api.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-# Root olmayan kullanici: konteyner ele gecirilse bile dosya sistemi yazilabilir degil.
-RUN useradd --uid 1001 --create-home appuser \
+# curl saglik kontrolu icin gerekli; root olmayan kullanici en az yetki icin.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --uid 1001 --create-home appuser \
     && mkdir -p /app/data /app/sample-data \
     && chown -R appuser:appuser /app
 
@@ -33,7 +36,7 @@ ENV ASPNETCORE_URLS=http://+:8080 \
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
-    CMD ["dotnet", "Gloria.Commission.Api.dll", "--healthcheck"]
+HEALTHCHECK --interval=15s --timeout=3s --start-period=25s --retries=3 \
+    CMD curl --fail --silent http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "Gloria.Commission.Api.dll"]
