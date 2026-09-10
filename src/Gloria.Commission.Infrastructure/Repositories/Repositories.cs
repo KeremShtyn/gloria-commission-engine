@@ -14,12 +14,14 @@ public sealed class EmployeeRepository : IEmployeeRepository
 
     public Task<Employee?> FindByEmployeeNoAsync(string employeeNo, CancellationToken ct = default)
         => _db.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.Hotel)
             .FirstOrDefaultAsync(e => e.EmployeeNo == employeeNo, ct);
 
     public async Task<IReadOnlyList<Employee>> FindAllAsync(CancellationToken ct = default)
         => await _db.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.Hotel)
             .OrderBy(e => e.EmployeeNo)
@@ -40,7 +42,7 @@ public sealed class DepartmentRepository : IDepartmentRepository
     public DepartmentRepository(CommissionDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<Department>> FindAllAsync(CancellationToken ct = default)
-        => await _db.Departments.OrderBy(d => d.Code).ToListAsync(ct);
+        => await _db.Departments.AsNoTracking().OrderBy(d => d.Code).ToListAsync(ct);
 
     public void Add(Department department) => _db.Departments.Add(department);
 }
@@ -52,7 +54,7 @@ public sealed class HotelRepository : IHotelRepository
     public HotelRepository(CommissionDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<Hotel>> FindAllAsync(CancellationToken ct = default)
-        => await _db.Hotels.OrderBy(h => h.Code).ToListAsync(ct);
+        => await _db.Hotels.AsNoTracking().OrderBy(h => h.Code).ToListAsync(ct);
 
     public Task<bool> AnyAsync(CancellationToken ct = default) => _db.Hotels.AnyAsync(ct);
 
@@ -66,7 +68,7 @@ public sealed class ProductGroupRepository : IProductGroupRepository
     public ProductGroupRepository(CommissionDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<ProductGroup>> FindAllAsync(CancellationToken ct = default)
-        => await _db.ProductGroups.OrderBy(g => g.Code).ToListAsync(ct);
+        => await _db.ProductGroups.AsNoTracking().OrderBy(g => g.Code).ToListAsync(ct);
 
     public async Task<IReadOnlyDictionary<string, Guid>> GetIdsByCodeAsync(CancellationToken ct = default)
         => await _db.ProductGroups.ToDictionaryAsync(g => g.Code, g => g.Id, ct);
@@ -84,6 +86,7 @@ public sealed class CommissionRuleRepository : ICommissionRuleRepository
 
     public async Task<IReadOnlyList<CommissionRule>> FindAllAsync(CancellationToken ct = default)
         => await _db.CommissionRules
+            .AsNoTracking()
             .Include(r => r.Tiers)
             .Include(r => r.Department).Include(r => r.ProductGroup).Include(r => r.Hotel)
             .OrderByDescending(r => r.Priority).ThenBy(r => r.Code)
@@ -98,6 +101,7 @@ public sealed class CommissionRuleRepository : ICommissionRuleRepository
     public async Task<IReadOnlyList<CommissionRule>> FindEffectiveAsync(
         DateOnly from, DateOnly to, CancellationToken ct = default)
         => await _db.CommissionRules
+            .AsNoTracking()
             .Include(r => r.Tiers)
             .Where(r => r.IsActive && r.EffectiveFrom <= to && (r.EffectiveTo == null || r.EffectiveTo >= from))
             .ToListAsync(ct);
@@ -123,6 +127,7 @@ public sealed class SaleRecordRepository : ISaleRecordRepository
     public async Task<IReadOnlyList<SaleRecord>> FindByEmployeeAndPeriodAsync(
         Guid employeeId, DateOnly from, DateOnly to, CancellationToken ct = default)
         => await _db.SaleRecords
+            .AsNoTracking()
             .Include(s => s.ProductGroup)
             .Where(s => s.EmployeeId == employeeId && s.TransactionDate >= from && s.TransactionDate <= to)
             .OrderBy(s => s.TransactionDate).ThenBy(s => s.SourceDocumentNo)
@@ -131,6 +136,7 @@ public sealed class SaleRecordRepository : ISaleRecordRepository
     public async Task<IReadOnlyList<SaleRecord>> FindByPeriodAsync(
         DateOnly from, DateOnly to, CancellationToken ct = default)
         => await _db.SaleRecords
+            .AsNoTracking()
             .Include(s => s.ProductGroup)
             .Where(s => s.TransactionDate >= from && s.TransactionDate <= to)
             .OrderBy(s => s.TransactionDate).ThenBy(s => s.SourceDocumentNo)
@@ -153,31 +159,32 @@ public sealed class SaleRecordRepository : ISaleRecordRepository
     /// Once kaynak sistemin verdigi referansa bakilir (ERP'de vardir).
     /// PMS ve POS'ta boyle bir alan olmadigi icin
     /// personel + urun + mutlak tutar + tarih onceligi ile en yakin aday secilir.
+    ///
+    /// Eslesme mantigi serviste; burasi yalnizca adaylari tek sorguda getirir.
+    /// Iade basina sorgu atmak binlerce satirlik bir ekstrede aktarimi lineer yavaslatiyordu.
     /// </summary>
-    public async Task<SaleRecord?> FindOriginalForRefundAsync(
-        SaleRecord refund, CancellationToken ct = default)
+    public async Task<IReadOnlyList<SaleRecord>> FindReversalCandidatesAsync(
+        IReadOnlyCollection<SaleRecord> refunds, CancellationToken ct = default)
     {
-        if (!string.IsNullOrWhiteSpace(refund.SourceReference))
-        {
-            var byReference = await _db.SaleRecords.FirstOrDefaultAsync(
-                s => s.SourceSystem == refund.SourceSystem
-                     && s.SourceDocumentNo == refund.SourceReference
-                     && s.Status == SaleStatus.Normal, ct);
+        if (refunds.Count == 0) return [];
 
-            if (byReference is not null) return byReference;
-        }
+        var sources = refunds.Select(r => r.SourceSystem).Distinct().ToList();
+        var references = refunds
+            .Where(r => !string.IsNullOrWhiteSpace(r.SourceReference))
+            .Select(r => r.SourceReference!)
+            .Distinct()
+            .ToList();
+        var employeeIds = refunds.Select(r => r.EmployeeId).Distinct().ToList();
+        var productCodes = refunds.Select(r => r.ProductCode).Distinct().ToList();
 
-        var target = Math.Abs(refund.AmountTry);
-
+        // Adaylar izlenerek getirilir: eslesen orijinalin durumu Reversed'a cevrilecek.
         return await _db.SaleRecords
-            .Where(s => s.SourceSystem == refund.SourceSystem
-                        && s.EmployeeId == refund.EmployeeId
-                        && s.ProductCode == refund.ProductCode
-                        && s.Status == SaleStatus.Normal
-                        && s.TransactionDate <= refund.TransactionDate
-                        && s.AmountTry == target)
-            .OrderByDescending(s => s.TransactionDate)
-            .FirstOrDefaultAsync(ct);
+            .Where(s => s.Status == SaleStatus.Normal
+                        && sources.Contains(s.SourceSystem)
+                        && (references.Contains(s.SourceDocumentNo)
+                            || (employeeIds.Contains(s.EmployeeId)
+                                && productCodes.Contains(s.ProductCode))))
+            .ToListAsync(ct);
     }
 
     public void AddRange(IEnumerable<SaleRecord> sales) => _db.SaleRecords.AddRange(sales);
@@ -216,6 +223,7 @@ public sealed class PeriodRepository : IPeriodRepository
 
     public async Task<IReadOnlyList<Period>> FindAllAsync(CancellationToken ct = default)
         => await _db.Periods
+            .AsNoTracking()
             .OrderByDescending(p => p.Year).ThenByDescending(p => p.Month)
             .ToListAsync(ct);
 

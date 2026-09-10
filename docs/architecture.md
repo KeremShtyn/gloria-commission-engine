@@ -207,11 +207,11 @@ Bunları şimdi eklemek teslim edilen dilimi karmaşıklaştırırdı; sınırı
 
 ## Bilinen sınır
 
-**Yarıda kalan aktarım "0 satır" gibi görünür.** `import_batches` kaydında durum alanı yok;
-parti oluşturulduktan sonra işlem hata alırsa geride sayıları sıfır olan bir kayıt kalır ve
-aktarım geçmişinde başarısız olduğu değil, hiç satır işlemediği izlenimini verir.
+**Başarısız aktarım geçmişte hiç görünmez.** Aktarımın tamamı tek transaction: parti kaydı,
+ham satırlar, satışlar ve iade eşleşmeleri birlikte yazılır, ortada bir hata çıkarsa hepsi
+geri alınır. Yarım yazılmış kayıt kalmıyor — ama bu sefer de denemenin kendisi iz bırakmıyor.
+Muhasebe "dosyayı yükledim, olmadı" dediğinde aktarım geçmişinde bakacak bir satır yok.
 
-En olası sebep olan "kapalı döneme aktarım" ön kontrolle çözüldü — o durumda parti hiç
-oluşturulmuyor. Ama disk hatası ya da bozuk kodlama gibi beklenmedik bir hata aynı izi
-bırakabilir. Kalıcı çözüm partiye `Status` (Running / Completed / Failed) ve hata mesajı
-alanı eklemek; aktarım geçmişi o zaman başarısız denemeleri de gerekçesiyle gösterir.
+Kalıcı çözüm partiye `Status` (Running / Completed / Failed) ve hata mesajı alanı eklemek,
+başarısızlık kaydını ayrı bir transaction'da yazmak: veri değişikliği geri alınır, denemenin
+kaydı kalır. Aktarım geçmişi o zaman başarısız denemeleri de gerekçesiyle gösterir.

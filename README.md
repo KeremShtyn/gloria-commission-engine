@@ -58,9 +58,10 @@ bunlar dosyayı reddettirmez, `import_errors` tablosuna düşer.
 dotnet test
 ```
 
-62 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
+65 test var. Kademeli barem ve iade senaryoları `TieredRuleTests.cs` ve `RefundTests.cs`
 altında; denetim kaydı ve dönem kilidi `PersistenceTests.cs`, yetki kuralı `AuthorizationTests.cs`,
-sayfalama ve sıralama `PeriodSummaryPagingTests.cs` altında.
+sayfalama ve sıralama `PeriodSummaryPagingTests.cs`, aktarımın transaction sınırı ve iade
+eşleştirmesi `ImportTests.cs` altında.
 
 ## Kimlik ve yetkilendirme
 
@@ -234,4 +235,9 @@ Kurallar:
   Testlerin hızlı ve hesabın yeniden üretilebilir olmasının sebebi bu.
 
 Yazma işlemleri `IUnitOfWork` ile kalıcılaşır; böylece bir servis metodu birden fazla tabloya
-tek işlemde yazabilir (aktarım: parti + satışlar + hatalı satırlar).
+tek işlemde yazabilir (aktarım: parti + satışlar + hatalı satırlar). Aktarımın tamamı tek
+transaction içinde koşar — ortada bir hata çıkarsa yarım yazılmış parti geride kalmaz.
+
+Okuma sorguları `AsNoTracking` ile çalışır. "Okuma uçları veri yazmaz" kuralı böylece
+teamül değil, veri erişim katmanının yapısal garantisi olur; hesap sırasında binlerce
+satış satırı da boşuna değişiklik izleyicisine girmez.

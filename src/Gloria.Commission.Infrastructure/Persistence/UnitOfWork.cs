@@ -15,6 +15,22 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public UnitOfWork(CommissionDbContext db) => _db = db;
 
+    public async Task<T> ExecuteInTransactionAsync<T>(
+        Func<CancellationToken, Task<T>> operation, CancellationToken ct = default)
+    {
+        // Zaten bir transaction icindeysek yenisi acilmaz; ic ice cagri tek sinir kalir.
+        if (_db.Database.CurrentTransaction is not null) return await operation(ct);
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
+
+        var result = await operation(ct);
+
+        // Commit edilmeden dispose edilirse transaction geri alinir; ayrica
+        // rollback cagirmaya gerek yok.
+        await transaction.CommitAsync(ct);
+        return result;
+    }
+
     public async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         try

@@ -74,8 +74,12 @@ public interface ISaleRecordRepository
     Task<IReadOnlySet<string>> FindExistingHashesAsync(
         IReadOnlyCollection<string> hashes, CancellationToken ct = default);
 
-    /// <summary>Bir iadenin iptal ettigi orijinal satis. Once referansa, sonra icerige bakilir.</summary>
-    Task<SaleRecord?> FindOriginalForRefundAsync(SaleRecord refund, CancellationToken ct = default);
+    /// <summary>
+    /// Verilen iadelerin eslesebilecegi orijinal satis adaylari — tek sorguda.
+    /// Hangi adayin secilecegine servis karar verir.
+    /// </summary>
+    Task<IReadOnlyList<SaleRecord>> FindReversalCandidatesAsync(
+        IReadOnlyCollection<SaleRecord> refunds, CancellationToken ct = default);
 
     void AddRange(IEnumerable<SaleRecord> sales);
 }

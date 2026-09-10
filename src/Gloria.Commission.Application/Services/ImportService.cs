@@ -45,7 +45,7 @@ public sealed class ImportService : IImportService
         _currentUser = currentUser;
     }
 
-    public async Task<ImportSummary> ImportAsync(
+    public Task<ImportSummary> ImportAsync(
         SourceSystem source, string fileName, string content, CancellationToken ct = default)
     {
         if (!_currentUser.CanSeeAllEmployees)
@@ -54,6 +54,23 @@ public sealed class ImportService : IImportService
         if (!_importers.TryGetValue(source, out var importer))
             throw new DomainException("SOURCE_UNSUPPORTED", $"'{source}' kaynak sistemi icin ayristirici yok.");
 
+        /*
+         * Aktarim tek transaction. Icerde dort ayri SaveChanges var (parti + ham satirlar,
+         * satislar + hatali satirlar, staging baglantisi, iade eslesmeleri ve parti sayaclari);
+         * ortada bir hata cikarsa hepsi birlikte geri alinir. Aksi halde geride sayilari
+         * sifir gorunen, aslinda satir yazmis bir parti kalabiliyordu.
+         */
+        return _unitOfWork.ExecuteInTransactionAsync(
+            token => ImportCoreAsync(source, fileName, content, importer, token), ct);
+    }
+
+    private async Task<ImportSummary> ImportCoreAsync(
+        SourceSystem source,
+        string fileName,
+        string content,
+        ISourceImporter importer,
+        CancellationToken ct)
+    {
         var employeeIds = await _employees.GetIdsByEmployeeNoAsync(ct);
         var groupIds = await _productGroups.GetIdsByCodeAsync(ct);
         var knownEmployees = employeeIds.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -252,20 +269,69 @@ public sealed class ImportService : IImportService
         var refunds = inserted.Where(s => s.Status == SaleStatus.Refund).ToList();
         if (refunds.Count == 0) return 0;
 
+        // Adaylar tek sorguda gelir; eslesme bellekte yapilir.
+        var candidates = await _sales.FindReversalCandidatesAsync(refunds, ct);
+
+        var byDocumentNo = candidates
+            .GroupBy(s => (s.SourceSystem, s.SourceDocumentNo))
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // Sezgisel eslesmede tarihi iadeye en yakin olan tercih edilir.
+        var byEmployeeProduct = candidates
+            .GroupBy(s => (s.SourceSystem, s.EmployeeId, s.ProductCode))
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(s => s.TransactionDate).ToList());
+
+        /*
+         * Bir orijinal yalnizca bir iadeyi karsilar. Onceki surumde eslesme her iade icin
+         * veritabanina soruluyordu; henuz kaydedilmemis "Reversed" isareti sorguya
+         * yansimadigi icin ayni satir iki iadeyle eslesebiliyor ve ikinci iade prim
+         * tabanindan sessizce dusuyordu.
+         */
+        var claimed = new HashSet<Guid>();
         var matched = 0;
 
-        foreach (var refund in refunds)
+        foreach (var refund in refunds
+                     .OrderBy(r => r.TransactionDate)
+                     .ThenBy(r => r.SourceDocumentNo, StringComparer.Ordinal))
         {
-            var original = await _sales.FindOriginalForRefundAsync(refund, ct);
+            var original = FindOriginal(refund, byDocumentNo, byEmployeeProduct, claimed);
             if (original is null) continue;
 
             refund.ReversedSaleId = original.Id;
             original.Status = SaleStatus.Reversed;
+            claimed.Add(original.Id);
             matched++;
         }
 
         if (matched > 0) await _unitOfWork.SaveChangesAsync(ct);
         return matched;
+    }
+
+    /// <summary>Once belge referansi, bulunamazsa personel + urun + tutar + tarih onceligi.</summary>
+    private static SaleRecord? FindOriginal(
+        SaleRecord refund,
+        IReadOnlyDictionary<(SourceSystem, string), SaleRecord> byDocumentNo,
+        IReadOnlyDictionary<(SourceSystem, Guid, string), List<SaleRecord>> byEmployeeProduct,
+        HashSet<Guid> claimed)
+    {
+        if (!string.IsNullOrWhiteSpace(refund.SourceReference)
+            && byDocumentNo.TryGetValue((refund.SourceSystem, refund.SourceReference), out var byReference)
+            && byReference.Status == SaleStatus.Normal
+            && !claimed.Contains(byReference.Id))
+            return byReference;
+
+        if (!byEmployeeProduct.TryGetValue(
+                (refund.SourceSystem, refund.EmployeeId, refund.ProductCode), out var pool))
+            return null;
+
+        var target = Math.Abs(refund.AmountTry);
+
+        return pool.FirstOrDefault(s => s.Status == SaleStatus.Normal
+                                        && !claimed.Contains(s.Id)
+                                        && s.TransactionDate <= refund.TransactionDate
+                                        && s.AmountTry == target);
     }
 
     /// <summary>
