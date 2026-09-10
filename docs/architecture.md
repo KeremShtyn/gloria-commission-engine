@@ -93,6 +93,32 @@ Yetki kontrolü servis katmanında; endpoint'e güvenilmez. Şu an rol HTTP head
 **Para birimi.** Yabancı para satışlar TRY'ye çevrilerek saklanır, kullanılan kur satırda tutulur.
 Kuru bulunamayan satır sessizce 1 kabul edilmez; hatalı satır olarak loglanır.
 
+## Katmanlar
+
+İstek tek yönde ilerler; bağımlılıklar içeri doğru akar.
+
+```
+Api            Controller      HTTP: bağlama, doğrulama, durum kodu. İş mantığı yok.
+                   │
+Application    Service         İş mantığı, yetki denetimi, işlem sınırı
+                   │  ↕ Mapper (DTO ↔ Entity)
+               Repository      arayüz — servis ORM'i bilmez
+                   │
+Infrastructure Repository      EF Core implementasyonu, interceptor'lar
+                   │
+Domain         Entity          iş nesneleri, davranışlarıyla
+```
+
+DTO'lar `Application/Dtos` altında `Requests` ve `Responses` olarak ayrı. Entity dışarı sızmaz:
+controller ne entity görür ne de EF Core tipi. Bunun karşılığı elle yazılan mapper'lar —
+kütüphane bağımlılığı getirmemek ve hangi alanın nereye gittiğinin okunur kalması için tercih edildi.
+
+Kural motoru bu zincirin dışında durur: saf bir fonksiyondur, girdisini servisten alır.
+Veritabanına dokunmadığı için testleri kurulum gerektirmez.
+
+Yazma işlemleri `IUnitOfWork.SaveChangesAsync` ile kalıcılaşır. Denetim kaydı ve dönem kilidi
+o çağrının içindeki interceptor'larda çalıştığı için, hangi servisten gelinirse gelinsin geçerli.
+
 ## Ölçeklenme
 
 Bu case tek servis olarak teslim edildi. Gerçek kurulumda değişecekler:
