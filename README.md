@@ -97,7 +97,11 @@ builder.Services
 ```
 
 Yerine `.AddJwtBearer(...)` gelir. Controller'lar, policy'ler, servisler ve testler değişmez;
-`HttpContextCurrentUser` zaten header'ı değil claim'leri okuyor.
+`HttpContextCurrentUser` zaten header'ı değil claim'leri okuyor. Geçişte doğrulanacak tek şey
+token'daki claim adlarının beklenen tiplere eşlendiği.
+
+JWT yetkilendirmeyi çözer ama kimlik doğrulamanın tamamı değildir: token süresi, iptal,
+HTTPS zorunluluğu ve login rate limit ayrıca ele alınmalıdır.
 
 ## API
 
