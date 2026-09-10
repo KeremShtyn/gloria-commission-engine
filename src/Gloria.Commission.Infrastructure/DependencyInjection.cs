@@ -10,6 +10,7 @@ using Gloria.Commission.Infrastructure.Persistence.Interceptors;
 using Gloria.Commission.Infrastructure.Repositories;
 using Gloria.Commission.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Gloria.Commission.Infrastructure;
@@ -21,7 +22,7 @@ public static class DependencyInjection
     /// veya repository'lerin nasil uygulandigini bilmez.
     /// </summary>
     public static IServiceCollection AddCommissionInfrastructure(
-        this IServiceCollection services, string connectionString)
+        this IServiceCollection services, IConfiguration configuration, string connectionString)
     {
         // --- Veritabani ---
         services.AddScoped<AuditSaveChangesInterceptor>();
@@ -61,6 +62,11 @@ public static class DependencyInjection
         services.AddScoped<ISourceImporter, ErpImporter>();
 
         services.AddSingleton<IExchangeRateProvider, StaticExchangeRateProvider>();
+
+        // --- Zamanlanmis aktarim ---
+        services.Configure<ImportWatcherOptions>(
+            configuration.GetSection(ImportWatcherOptions.SectionName));
+        services.AddHostedService<ImportWatcherService>();
 
         // --- Servis katmani ---
         services.AddScoped<IRuleService, RuleService>();

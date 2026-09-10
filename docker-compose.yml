@@ -8,6 +8,13 @@ services:
     environment:
       ConnectionStrings__Default: "Data Source=/app/data/gloria-commission.db"
       Cors__Origins__0: "http://localhost:5173"
+      # Zamanlanmis aktarim: kaynak sistemler ekstreyi inbox klasorune birakir.
+      ImportWatcher__Enabled: "true"
+      ImportWatcher__InboxPath: "/app/data/inbox"
+      ImportWatcher__ProcessedPath: "/app/data/processed"
+      ImportWatcher__FailedPath: "/app/data/failed"
+      ImportWatcher__Interval: "00:01:00"
+      ImportWatcher__InitialDelay: "00:00:10"
     volumes:
       # SQLite dosyasi konteyner disinda kalir; yeniden olusturmada veri kaybolmaz.
       - api-data:/app/data

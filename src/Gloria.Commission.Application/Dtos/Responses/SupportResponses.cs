@@ -53,6 +53,18 @@ public sealed record ImportBatchResponse
     public DateTime? CompletedAtUtc { get; init; }
 }
 
+/// <summary>Ham satirin donusum uygulanmadan onceki hali.</summary>
+public sealed record StagingRowResponse
+{
+    public int RowNumber { get; init; }
+    public string SourceSystem { get; init; } = string.Empty;
+    public string Status { get; init; } = string.Empty;
+    public string RawLine { get; init; } = string.Empty;
+    public long? SaleRecordId { get; init; }
+    public DateTime ReceivedAtUtc { get; init; }
+    public DateTime? ProcessedAtUtc { get; init; }
+}
+
 public sealed record ImportErrorResponse
 {
     public int RowNumber { get; init; }

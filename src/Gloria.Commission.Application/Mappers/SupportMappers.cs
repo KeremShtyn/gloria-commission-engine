@@ -70,6 +70,17 @@ public static class ImportMapper
         CompletedAtUtc = batch.CompletedAtUtc
     };
 
+    public static StagingRowResponse ToResponse(StagingRow row) => new()
+    {
+        RowNumber = row.RowNumber,
+        SourceSystem = row.SourceSystem.ToString(),
+        Status = row.Status.ToString(),
+        RawLine = row.RawLine,
+        SaleRecordId = row.SaleRecordId,
+        ReceivedAtUtc = row.ReceivedAtUtc,
+        ProcessedAtUtc = row.ProcessedAtUtc
+    };
+
     public static ImportErrorResponse ToResponse(ImportError error) => new()
     {
         RowNumber = error.RowNumber,

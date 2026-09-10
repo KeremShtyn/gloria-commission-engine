@@ -92,6 +92,12 @@ public interface IImportRepository
     void AddBatch(ImportBatch batch);
     void AddErrors(IEnumerable<ImportError> errors);
 
+    /// <summary>Ham satirlari donusum uygulanmadan once kaydeder.</summary>
+    void AddStagingRows(IEnumerable<StagingRow> rows);
+
+    /// <summary>Bir partinin ham satirlari. Yeniden isleme ve mutabakat icin.</summary>
+    Task<IReadOnlyList<StagingRow>> FindStagingRowsAsync(int batchId, CancellationToken ct = default);
+
     Task<IReadOnlyList<ImportBatch>> FindBatchesAsync(CancellationToken ct = default);
 
     Task<IReadOnlyList<ImportError>> FindErrorsByBatchAsync(

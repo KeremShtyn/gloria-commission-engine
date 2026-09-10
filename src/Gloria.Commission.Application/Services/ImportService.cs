@@ -63,6 +63,22 @@ public sealed class ImportService : IImportService
         var knownEmployees = employeeIds.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var rows = importer.Parse(content, knownEmployees);
+
+        // Ham satirlar donusum uygulanmadan once saklanir: ayristiricida bir hata
+        // bulunursa kaynaga donmeden ayni parti yeniden islenebilir.
+        var stagingRows = rows.ToDictionary(
+            r => r.RowNumber,
+            r => new StagingRow
+            {
+                ImportBatchId = batch.Id,
+                SourceSystem = source,
+                RowNumber = r.RowNumber,
+                RawLine = Truncate(r.RawLine, 4000)
+            });
+
+        _imports.AddStagingRows(stagingRows.Values);
+        await _unitOfWork.SaveChangesAsync(ct);
+
         var failures = rows.Where(r => !r.IsValid).ToList();
 
         var (accepted, duplicatesInFile) = DeduplicateWithinFile(rows.Where(r => r.IsValid).ToList());
@@ -71,18 +87,33 @@ public sealed class ImportService : IImportService
             accepted.Select(r => r.Sale!.SourceHash).ToList(), ct);
 
         var toInsert = new List<SaleRecord>();
+        var insertedByRow = new Dictionary<int, SaleRecord>();
 
         foreach (var row in accepted)
         {
             var sale = row.Sale!;
-            if (existing.Contains(sale.SourceHash)) continue;
+
+            if (existing.Contains(sale.SourceHash))
+            {
+                MarkStaging(stagingRows, row.RowNumber, StagingRowStatus.Duplicate);
+                continue;
+            }
 
             sale.ImportBatchId = batch.Id;
             sale.EmployeeId = employeeIds.TryGetValue(sale.EmployeeNo, out var id) ? id : null;
+
             toInsert.Add(sale);
+            insertedByRow[row.RowNumber] = sale;
         }
 
         _sales.AddRange(toInsert);
+
+        foreach (var failure in failures)
+            MarkStaging(stagingRows, failure.RowNumber, StagingRowStatus.Failed);
+
+        // Dosya ici mukerrer olarak elenen satirlar
+        foreach (var row in rows.Where(r => r.IsValid && !accepted.Contains(r)))
+            MarkStaging(stagingRows, row.RowNumber, StagingRowStatus.Duplicate);
 
         _imports.AddErrors(failures.Select(f => new ImportError
         {
@@ -92,6 +123,18 @@ public sealed class ImportService : IImportService
             ErrorCode = f.ErrorCode!,
             ErrorMessage = Truncate(f.ErrorMessage!, 500)
         }));
+
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        // Satis kayitlari yazildiktan sonra kimlikleri olustu; staging satiri ona baglanir.
+        foreach (var (rowNumber, sale) in insertedByRow)
+        {
+            if (!stagingRows.TryGetValue(rowNumber, out var staging)) continue;
+
+            staging.Status = StagingRowStatus.Processed;
+            staging.SaleRecordId = sale.Id;
+            staging.ProcessedAtUtc = DateTime.UtcNow;
+        }
 
         await _unitOfWork.SaveChangesAsync(ct);
 
@@ -136,6 +179,13 @@ public sealed class ImportService : IImportService
     {
         var errors = await _imports.FindErrorsByBatchAsync(batchId, ct);
         return errors.Select(ImportMapper.ToResponse).ToList();
+    }
+
+    public async Task<IReadOnlyList<StagingRowResponse>> GetStagingRowsAsync(
+        int batchId, CancellationToken ct = default)
+    {
+        var rows = await _imports.FindStagingRowsAsync(batchId, ct);
+        return rows.Select(ImportMapper.ToResponse).ToList();
     }
 
     /// <summary>
@@ -184,6 +234,15 @@ public sealed class ImportService : IImportService
 
         if (matched > 0) await _unitOfWork.SaveChangesAsync(ct);
         return matched;
+    }
+
+    private static void MarkStaging(
+        IReadOnlyDictionary<int, StagingRow> rows, int rowNumber, StagingRowStatus status)
+    {
+        if (!rows.TryGetValue(rowNumber, out var staging)) return;
+
+        staging.Status = status;
+        staging.ProcessedAtUtc = DateTime.UtcNow;
     }
 
     private static string Truncate(string value, int max)

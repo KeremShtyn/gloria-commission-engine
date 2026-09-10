@@ -57,6 +57,16 @@ public class ImportsController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<ImportBatchResponse>>> GetBatches(CancellationToken ct)
         => Ok(await _importService.GetBatchesAsync(ct));
 
+    /// <summary>
+    /// Bir yuklemenin ham satirlari: kaynak sistemin gonderdigi hal, donusum uygulanmadan once.
+    /// Ayristiricida bir hata bulunursa kaynaga donmeden yeniden isleme icin kullanilir.
+    /// </summary>
+    [HttpGet("{batchId:int}/staging")]
+    [ProducesResponseType(typeof(IReadOnlyList<StagingRowResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<StagingRowResponse>>> GetStagingRows(
+        int batchId, CancellationToken ct)
+        => Ok(await _importService.GetStagingRowsAsync(batchId, ct));
+
     /// <summary>Bir yuklemenin hatali satirlari, ham hali ve gerekcesiyle.</summary>
     [HttpGet("{batchId:int}/errors")]
     [ProducesResponseType(typeof(IReadOnlyList<ImportErrorResponse>), StatusCodes.Status200OK)]

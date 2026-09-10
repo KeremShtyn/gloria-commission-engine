@@ -74,3 +74,24 @@ public class ImportErrorConfiguration : IEntityTypeConfiguration<ImportError>
             .HasForeignKey(x => x.ImportBatchId).OnDelete(DeleteBehavior.Cascade);
     }
 }
+
+public class StagingRowConfiguration : IEntityTypeConfiguration<StagingRow>
+{
+    public void Configure(EntityTypeBuilder<StagingRow> b)
+    {
+        b.ToTable("staging_rows");
+        b.HasKey(x => x.Id);
+
+        b.Property(x => x.RawLine).HasMaxLength(4000).IsRequired();
+
+        b.HasOne(x => x.ImportBatch).WithMany()
+            .HasForeignKey(x => x.ImportBatchId).OnDelete(DeleteBehavior.Cascade);
+
+        // Bir partinin satirlarini sirasiyla okumak ve yeniden islemek icin.
+        b.HasIndex(x => new { x.ImportBatchId, x.RowNumber })
+            .HasDatabaseName("idx_staging_rows_batch_id_row_number");
+
+        // "Islenmemis satir kaldi mi" sorgusu.
+        b.HasIndex(x => x.Status).HasDatabaseName("idx_staging_rows_status");
+    }
+}

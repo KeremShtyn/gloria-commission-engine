@@ -226,6 +226,16 @@ public sealed class ImportRepository : IImportRepository
 
     public void AddErrors(IEnumerable<ImportError> errors) => _db.ImportErrors.AddRange(errors);
 
+    public void AddStagingRows(IEnumerable<StagingRow> rows) => _db.StagingRows.AddRange(rows);
+
+    public async Task<IReadOnlyList<StagingRow>> FindStagingRowsAsync(
+        int batchId, CancellationToken ct = default)
+        => await _db.StagingRows
+            .AsNoTracking()
+            .Where(r => r.ImportBatchId == batchId)
+            .OrderBy(r => r.RowNumber)
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<ImportBatch>> FindBatchesAsync(CancellationToken ct = default)
         => await _db.ImportBatches
             .AsNoTracking()

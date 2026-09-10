@@ -18,10 +18,17 @@ builder.Host.UseSerilog(LoggingSetup.ConfigureSerilog);
 var connectionString = builder.Configuration.GetConnectionString("Default")
                        ?? "Data Source=gloria-commission.db";
 
-builder.Services.AddCommissionInfrastructure(connectionString);
+builder.Services.AddCommissionInfrastructure(builder.Configuration, connectionString);
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+// HTTP istegi varsa kullanici claim'lerden, yoksa (zamanlanmis is) sistem kullanicisi.
+builder.Services.AddScoped<ICurrentUser>(provider =>
+{
+    var httpContext = provider.GetRequiredService<IHttpContextAccessor>().HttpContext;
+    return httpContext is null
+        ? new SystemCurrentUser()
+        : new HttpContextCurrentUser(httpContext.User);
+});
 
 // Kimlik basliktan okunuyor (case gercek kimlik dogrulama istemiyor);
 // yetkilendirme ASP.NET'in kendi altyapisiyla yapiliyor.

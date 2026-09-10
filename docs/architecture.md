@@ -6,12 +6,16 @@ tek servis, SQLite, üç kural tipi. Ölçeklenme notları en sonda.
 ## Genel akış
 
 ```
-Fidelio (PMS) ──┐
-Flyby   (POS) ──┼─→  Staging  ─→  Ayrıştırma  ─→  sale_records  ─→  Kural motoru  ─→  Prim
-Oracle  (ERP) ──┘    (ham CSV)     + doğrulama        │                                  │
-                                        │             └──→ ERP mutabakatı            audit_logs
-                                        └──→ import_errors
+Fidelio (PMS) ──┐   otomatik    ┌──────────────┐    ┌──────────────┐   ┌──────────────┐
+Flyby   (POS) ──┼──  ekstre  ──→│ staging_rows │──→ │ sale_records │──→│ Kural motoru │──→ Prim
+Oracle  (ERP) ──┘   (dosya)     │  (ham satır) │    └──────────────┘   └──────────────┘
+                                └──────┬───────┘           │
+                                       │                   └──→ ERP mutabakatı
+                                       └──→ import_errors
 ```
+
+Ekstreyi kaynak sistem otomatik üretir; insan hiçbir adımda yok. Bugünkü manuel Excel
+süreci ortadan kalkar — zaten çözülmesi istenen problem oydu.
 
 Üç kaynak da aynı `sale_records` tablosuna normalize edilir: kaynak sistem, belge no, tarih,
 personel, ürün, adet, tutar, para birimi, durum. Kural motoru kaynak sistemi bilmez —
@@ -22,10 +26,27 @@ sadece bir alan olarak görür, kural yazarken filtre olarak kullanılabilir.
 **Gecelik batch, gün içi tetiklemeye açık.** Prim ay sonunda kesinleşiyor; anlık doğruluk
 gereksinimi yok. Gerçek zamanlı entegrasyon üç kaynak sistemin de webhook/CDC yeteneği olmasını
 ve her satırın anında mutabakatını gerektirirdi — maliyeti karşılığını vermiyor.
-Muhasebe gün içinde kontrol etmek isterse aynı import endpoint'i elle çağrılabilir.
 
-Fidelio ve JDE'ye doğrudan veritabanı bağlantısı açmak yerine dosya/servis sınırı korunur:
-kaynak sistemlerin şeması bizim sorumluluğumuz değil, sözleşme dosya formatı.
+Uygulanmış hali: `ImportWatcherService` belirlenen klasörü tarar, bulduğu ekstreyi dosya adının
+ön ekinden (`pms_`, `pos_`, `erp_`) tanır ve manuel yüklemeyle **aynı** import servisine verir.
+İşlenen dosya arşive, işlenemeyen ayrı klasöre taşınır. Muhasebe gün içinde kontrol etmek isterse
+aynı servisi HTTP üzerinden de çağırabilir — aktarım mantığı tek yerde.
+
+Arka planda HTTP isteği olmadığı için iş, denetim kayıtlarında `system` aktörüyle ve Muhasebe
+yetkisiyle çalışır: zamanlanmış aktarım, muhasebenin elle yaptığı işin gözetimsiz halidir,
+kural değiştirme yetkisine ihtiyacı yoktur.
+
+**Kaynak sistemlerin içine uzanılmaz.** Fidelio'nun ya da JDE'nin veritabanına doğrudan
+bağlanmak, onların iç şemasına bağımlı olmak demektir; satıcı bir güncellemede kolon adını
+değiştirdiğinde prim sistemi çöker. Bunun yerine kaynak sistemin ürettiği dosya ya da açtığı
+API tüketilir. Bağımlılık iç yapıya değil sözleşmeye kurulur; ayrıca canlı bir otel sistemine
+dışarıdan sorgu atma riski ve o sistemlerin veritabanı şifresini taşıma yükü ortadan kalkar.
+
+**Ham veri saklanır.** Gelen her satır, hiçbir dönüşüm uygulanmadan `staging_rows` tablosuna
+yazılır; ayrıştırma ondan sonra çalışır. Sebebi: ayrıştırıcıda bir hata olursa satır sessizce
+yanlış kaydedilir ve karşılaştırılacak orijinal kalmaz. Maaş etkileyen bir sistemde "kaynak
+tam olarak bunu gönderdi" diyebilmek gerekir. Ayrıca ayrıştırıcı düzeltildiğinde aynı parti
+kaynağa dönmeden yeniden işlenebilir.
 
 **Mükerrer kayıt.** Kaynak sistemdeki belge numarası doğal anahtar. `SHA256(kaynak|belgeNo)`
 üzerinde unique index var; aynı dosya iki kez yüklense de satır tekrar yazılmaz. Aynı dosyada

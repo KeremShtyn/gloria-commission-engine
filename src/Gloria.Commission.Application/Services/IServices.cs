@@ -36,6 +36,7 @@ public interface IImportService
 
     Task<IReadOnlyList<ImportBatchResponse>> GetBatchesAsync(CancellationToken ct = default);
     Task<IReadOnlyList<ImportErrorResponse>> GetErrorsAsync(int batchId, CancellationToken ct = default);
+    Task<IReadOnlyList<StagingRowResponse>> GetStagingRowsAsync(int batchId, CancellationToken ct = default);
 }
 
 public interface IReconciliationService

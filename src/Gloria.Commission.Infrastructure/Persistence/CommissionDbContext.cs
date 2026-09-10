@@ -18,6 +18,7 @@ public class CommissionDbContext : DbContext
     public DbSet<CommissionResult> CommissionResults => Set<CommissionResult>();
     public DbSet<CommissionResultLine> CommissionResultLines => Set<CommissionResultLine>();
     public DbSet<ImportBatch> ImportBatches => Set<ImportBatch>();
+    public DbSet<StagingRow> StagingRows => Set<StagingRow>();
     public DbSet<ImportError> ImportErrors => Set<ImportError>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 

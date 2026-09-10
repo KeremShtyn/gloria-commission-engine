@@ -112,6 +112,7 @@ HTTPS zorunluluğu ve login rate limit ayrıca ele alınmalıdır.
 | `GET /api/v1/commissions/{yıl}/{ay}/reconciliation` | ERP mutabakat raporu |
 | `GET/POST/PUT/DELETE /api/v1/commission-rules` | Kural yönetimi |
 | `POST /api/v1/imports/{pms\|pos\|erp}` | CSV aktarımı |
+| `GET /api/v1/imports/{batchId}/staging` | Bir yüklemenin ham satırları |
 | `POST /api/v1/periods/{yıl}/{ay}/close` | Dönem kapatma |
 | `GET /api/v1/audit-logs` | Değişiklik geçmişi |
 
@@ -135,6 +136,10 @@ Ayrıntısı [docs/adr](docs/adr) altında, özeti:
   Yeni kural eklemek bir veritabanı satırı; yeni bir *tip* eklemek yeni bir strateji sınıfı.
 - **Tarihte katı, tutarda toleranslı ayrıştırma.** `32/08/2026` reddedilir — yanlış tahmin primi
   yanlış aya yazar. `2.500,00` kabul edilir — belirsizlik yok, reddetmek gerçek ciroyu kaybettirir.
+- **Ham veri saklanır.** Gelen satır önce `staging_rows`'a yazılır, ayrıştırma sonra çalışır.
+  Ayrıştırıcıda hata çıkarsa kaynağa dönmeden yeniden işlenebilir.
+- **Zamanlanmış aktarım.** `ImportWatcherService` klasörü tarar, dosyayı manuel yüklemeyle
+  aynı servise verir. `ImportWatcher:Enabled` ile açılır; Compose'da açık.
 - **Denetim kaydı ve dönem kilidi `SaveChanges` içinde.** Servis katmanında değil; hangi yoldan
   gelinirse gelinsin kural ve satış değişiklikleri loglanır, kapalı dönem korunur.
 - **Audit log veritabanında, uygulama logu stdout'ta.** Audit log iş kaydı, aynı transaction'da
