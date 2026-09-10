@@ -92,8 +92,13 @@ Yeni bir kalem eklemek veri işi; dördüncü bir hesaplama *davranışı* gerek
 veritabanında script çalıştıran bir DSL, denetlenmesi ve test edilmesi çok daha zor bir sistem olurdu.
 
 Motor saf bir fonksiyondur: personel, satışlar ve kurallar girer; sonuç ve **her adımın gerekçesi**
-çıkar. Hesap veritabanına `commission_result_lines` olarak yazılır — hangi satış, hangi kural,
-hangi oran, ara toplam. Prim itirazı geldiğinde hesap yeniden koşturulmadan cevaplanabilir.
+çıkar. Prim itirazı geldiğinde hesap yeniden koşturulmadan cevaplanabilsin diye adımlar
+`commission_result_lines` olarak saklanır.
+
+**Okuma ile yazma ayrıdır.** Prim ekranları hesabı canlı gösterir ve hiçbir şey yazmaz;
+kalıcı kayıt `POST /commissions/{yıl}/{ay}/calculate` ile oluşur. Okuma ucu yazsaydı iki
+kullanıcının aynı anda sayfayı açması aynı satırı yazmaya çalışır ve istek hata verirdi.
+Kayıt işlemi de çakışabilir — bu durumda 409 döner, kullanıcıya tekrar denemesi söylenir.
 
 Hiçbir kurala uymayan satış sessizce yutulmaz; sonuçta gerekçesiyle listelenir.
 (Verilen veri setinde golf dersi satışı bu durumda — kuralı henüz tanımlı değil.)

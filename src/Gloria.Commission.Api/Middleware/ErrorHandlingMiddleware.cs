@@ -49,6 +49,7 @@ public sealed class ErrorHandlingMiddleware
     private static int StatusFor(string code) => code switch
     {
         "FORBIDDEN" => StatusCodes.Status403Forbidden,
+        "CONCURRENT_UPDATE" => StatusCodes.Status409Conflict,
         var c when c.EndsWith("_NOT_FOUND", StringComparison.Ordinal) => StatusCodes.Status404NotFound,
         var c when c.EndsWith("_EXISTS", StringComparison.Ordinal) => StatusCodes.Status409Conflict,
         _ => StatusCodes.Status422UnprocessableEntity

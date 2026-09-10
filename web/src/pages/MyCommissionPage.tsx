@@ -5,7 +5,7 @@ import { PeriodPicker } from '../components/PeriodPicker'
 import { StatSkeleton, TableSkeleton } from '../components/Skeleton'
 import { EXCLUSION_REASON_LABEL } from '../constants'
 import { useSession } from '../context/SessionContext'
-import type { CommissionResultResponse } from '../types'
+import type { CommissionResultResponse, EmployeeResponse } from '../types'
 import { amountClass, formatMoney, formatPercent } from '../utils/formatters'
 
 export function MyCommissionPage() {
@@ -19,12 +19,32 @@ export function MyCommissionPage() {
   )
 
   const [result, setResult] = useState<CommissionResultResponse | null>(null)
+  const [employees, setEmployees] = useState<EmployeeResponse[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   // Personel rolunde baska bir personel sorgulanamaz; kutu kendi numarasina sabitlenir.
   const locked = !canSeeAllEmployees
   const target = locked ? (session.employeeNo ?? employeeNo) : employeeNo
+
+  /** Personel rolunde secim yok; kendi adi gosterilir. */
+  const ownLabel = result ? `${result.fullName} — ${result.department}` : target
+
+  /*
+   * Personel listesi yalnizca baskasinin primini gorebilen roller icin cekilir.
+   * Personel rolu zaten kendi kaydina kilitli; listeyi getirmek gereksiz olurdu
+   * ve diger calisanlarin adlarini bosuna gosterirdi.
+   */
+  useEffect(() => {
+    if (locked) return
+
+    api
+      .employees(session)
+      .then((list) =>
+        setEmployees([...list].sort((a, b) => a.fullName.localeCompare(b.fullName, 'tr'))),
+      )
+      .catch(() => setEmployees([]))
+  }, [locked, session])
 
   const load = useCallback(async () => {
     setBusy(true)
@@ -64,14 +84,24 @@ export function MyCommissionPage() {
           onRefresh={load}
           busy={busy}
         >
-          <div>
-            <label htmlFor="employeeNo">Personel no</label>
-            <input
-              id="employeeNo"
-              value={target}
-              disabled={locked}
-              onChange={(e) => setEmployeeNo(e.target.value.trim().toUpperCase())}
-            />
+          <div style={{ minWidth: 260 }}>
+            <label htmlFor="employeeNo">Personel</label>
+
+            {locked ? (
+              <input id="employeeNo" value={ownLabel} disabled />
+            ) : (
+              <select
+                id="employeeNo"
+                value={target}
+                onChange={(e) => setEmployeeNo(e.target.value)}
+              >
+                {employees.map((employee) => (
+                  <option key={employee.employeeNo} value={employee.employeeNo}>
+                    {employee.fullName} — {employee.department}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </PeriodPicker>
       </div>

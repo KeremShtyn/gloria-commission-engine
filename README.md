@@ -108,7 +108,8 @@ HTTPS zorunluluğu ve login rate limit ayrıca ele alınmalıdır.
 | Endpoint | Açıklama |
 |---|---|
 | `GET /api/v1/commissions/{yıl}/{ay}/employees/{personelNo}` | Primi hesaplama adımlarıyla döner |
-| `GET /api/v1/commissions/{yıl}/{ay}` | Dönemin tüm personel özeti |
+| `GET /api/v1/commissions/{yıl}/{ay}` | Dönemin tüm personel özeti (canlı hesap, veri yazmaz) |
+| `POST /api/v1/commissions/{yıl}/{ay}/calculate` | Hesabı çalıştırır ve sonuçları kalıcı kaydeder |
 | `GET /api/v1/commissions/{yıl}/{ay}/reconciliation` | ERP mutabakat raporu |
 | `GET/POST/PUT/DELETE /api/v1/commission-rules` | Kural yönetimi |
 | `POST /api/v1/imports/{pms\|pos\|erp}` | CSV aktarımı |
@@ -152,6 +153,9 @@ Ayrıntısı [docs/adr](docs/adr) altında, özeti:
   serbest metin bir yazım hatasıyla sessizce sıfır prim üretirdi. Otel personelin özelliğidir.
 - **Birincil anahtarlar `Guid`.** Sıralı tamsayı URL'de tahmin edilebilir olur. İndeks
   parçalanmasını önlemek için zaman damgası önekli üretiliyor (`SequentialGuid`).
+- **Okuma uçları veri yazmaz.** Prim ekranları hesabı canlı gösterir; `commission_results`
+  yalnızca `POST .../calculate` ile güncellenir. Aksi halde iki kullanıcının aynı anda sayfayı
+  açması aynı satırı yazmaya çalışırdı.
 - **Ham veri saklanır.** Gelen satır önce `staging_rows`'a yazılır, ayrıştırma sonra çalışır.
   Ayrıştırıcıda hata çıkarsa kaynağa dönmeden yeniden işlenebilir.
 - **Zamanlanmış aktarım.** `ImportWatcherService` klasörü tarar, dosyayı manuel yüklemeyle

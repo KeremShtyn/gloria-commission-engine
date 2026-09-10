@@ -16,10 +16,18 @@ public interface IRuleService
 
 public interface ICommissionService
 {
-    Task<CommissionResultResponse> CalculateAsync(
+    /// <summary>Bir personelin donem primini hesaplar ve dondurur. Veri yazmaz.</summary>
+    Task<CommissionResultResponse> GetForEmployeeAsync(
         int year, int month, string employeeNo, CancellationToken ct = default);
 
-    Task<PeriodSummaryResponse> CalculatePeriodAsync(int year, int month, CancellationToken ct = default);
+    /// <summary>Donemin tum personel ozetini hesaplar ve dondurur. Veri yazmaz.</summary>
+    Task<PeriodSummaryResponse> GetPeriodSummaryAsync(int year, int month, CancellationToken ct = default);
+
+    /// <summary>
+    /// Donemi hesaplar ve sonuclari adimlariyla kalici hale getirir.
+    /// Okuma uclari yazmaz; kalicilastirma yalnizca bu acik islemle yapilir.
+    /// </summary>
+    Task<PeriodSummaryResponse> RunPeriodAsync(int year, int month, CancellationToken ct = default);
 }
 
 public interface IPeriodService

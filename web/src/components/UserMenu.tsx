@@ -57,14 +57,14 @@ export function UserMenu({ employees }: { employees: EmployeeResponse[] }) {
       {open && (
         <div className="user-menu" role="menu">
           <div>
-            <label htmlFor="userId">Kullanıcı</label>
-            <input id="userId" value={session.userId} onChange={(e) => setUserId(e.target.value)} />
+            <label htmlFor="session-user">Kullanıcı</label>
+            <input id="session-user" value={session.userId} onChange={(e) => setUserId(e.target.value)} />
           </div>
 
           <div>
-            <label htmlFor="role">Rol</label>
+            <label htmlFor="session-role">Rol</label>
             <select
-              id="role"
+              id="session-role"
               value={session.role}
               onChange={(e) => setRole(e.target.value as UserRole)}
             >
@@ -78,9 +78,9 @@ export function UserMenu({ employees }: { employees: EmployeeResponse[] }) {
 
           {session.role === 'Employee' && (
             <div>
-              <label htmlFor="employeeNo">Personel</label>
+              <label htmlFor="session-employee">Personel</label>
               <select
-                id="employeeNo"
+                id="session-employee"
                 value={session.employeeNo ?? ''}
                 onChange={(e) => setEmployeeNo(e.target.value)}
               >

@@ -94,6 +94,12 @@ export const api = {
   periodSummary: (session: Session, year: number, month: number) =>
     get<PeriodSummaryResponse>(session, `/api/v1/commissions/${year}/${month}`),
 
+  runPeriod: (session: Session, year: number, month: number) =>
+    fetch(`${BASE_URL}/api/v1/commissions/${year}/${month}/calculate`, {
+      method: 'POST',
+      headers: headers(session),
+    }).then(handle<PeriodSummaryResponse>),
+
   reconciliation: (session: Session, year: number, month: number) =>
     get<ReconciliationResponse>(session, `/api/v1/commissions/${year}/${month}/reconciliation`),
 

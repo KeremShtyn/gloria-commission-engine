@@ -16,7 +16,9 @@ export function PeriodSummaryPage() {
   const [month, setMonth] = useState(8)
   const [summary, setSummary] = useState<PeriodSummaryResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [running, setRunning] = useState(false)
 
   const load = useCallback(async () => {
     setBusy(true)
@@ -35,16 +37,44 @@ export function PeriodSummaryPage() {
     void load()
   }, [load])
 
+  /*
+   * Okuma uclari veri yazmaz; hesabin kalici hale gelmesi acik bir islemdir.
+   * Boylece iki kullanici ayni anda sayfayi actiginda ayni satiri yazmaya calismaz.
+   */
+  const run = async () => {
+    setRunning(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const result = await api.runPeriod(session, year, month)
+      setSummary(result)
+      setNotice(`${result.period} dönemi hesaplandı ve kaydedildi.`)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setRunning(false)
+    }
+  }
+
   const rows = [...(summary?.employees ?? [])].sort((a, b) => b.totalCommission - a.totalCommission)
 
   return (
     <>
       <div className="page-head">
-        <h1>Dönem özeti</h1>
-        <p>Tüm personelin dönem primi. Satıra tıklayarak hesaplama detayına gidebilirsiniz.</p>
+        <div>
+          <h1>Dönem özeti</h1>
+          <p>
+            Tüm personelin dönem primi. Bu sayfa hesabı canlı gösterir; kalıcı kayıt için
+            "Hesapla ve kaydet" gerekir.
+          </p>
+        </div>
+        <button className="primary" onClick={run} disabled={running || summary?.closed}>
+          {running ? 'Hesaplanıyor…' : 'Hesapla ve kaydet'}
+        </button>
       </div>
 
       {error && <div className="alert error">{error}</div>}
+      {notice && <div className="alert success">{notice}</div>}
 
       <div className="card">
         <PeriodPicker

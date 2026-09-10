@@ -1,4 +1,6 @@
 using Gloria.Commission.Application.Abstractions;
+using Gloria.Commission.Domain.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace Gloria.Commission.Infrastructure.Persistence;
 
@@ -13,5 +15,19 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public UnitOfWork(CommissionDbContext db) => _db = db;
 
-    public Task<int> SaveChangesAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
+    public async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex is not null)
+        {
+            // Ayni kaydi es zamanli guncelleyen iki istek gercek bir cakismadir,
+            // beklenmeyen hata degil. EF istisnasi burada duruyor; ust katmanlar
+            // veri erisim teknolojisini bilmiyor.
+            throw new DomainException("CONCURRENT_UPDATE",
+                "Bu kayit su anda baska bir islem tarafindan guncelleniyor. Lutfen tekrar deneyin.");
+        }
+    }
 }
