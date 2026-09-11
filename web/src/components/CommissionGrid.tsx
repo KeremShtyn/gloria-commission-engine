@@ -1,3 +1,4 @@
+import { Link, useNavigate } from 'react-router-dom'
 import type { EmployeeCommissionResponse, PagedResponse } from '../types'
 import { amountClass, formatMoney } from '../utils/formatters'
 import { EmptyState } from './EmptyState'
@@ -12,30 +13,33 @@ const COLUMNS = [
   { field: 'totalCommission', label: 'Prim', numeric: true },
 ] as const
 
+/** Siralanabilir sutunlar + siralanamayan detay sutunu. */
+const COLUMN_COUNT = COLUMNS.length + 1
+
 interface Props {
   data: PagedResponse<EmployeeCommissionResponse> | null
   sort: string
-  selected: string | null
   loading: boolean
   /** Yeni sayfa gelirken eski liste ekranda kalir; bu bayrak yalnizca soldurur. */
   fetching: boolean
+  /** Personelin detay sayfasinin adresi; liste durumunu da tasir. */
+  detailHref: (employeeNo: string) => string
   onSortChange: (sort: string) => void
   onPageChange: (page: number) => void
   onSizeChange: (size: number) => void
-  onSelect: (employeeNo: string) => void
 }
 
 export function CommissionGrid({
   data,
   sort,
-  selected,
   loading,
   fetching,
+  detailHref,
   onSortChange,
   onPageChange,
   onSizeChange,
-  onSelect,
 }: Props) {
+  const navigate = useNavigate()
   const [sortField, sortDir] = sort.split(',')
 
   /** Ayni sutuna tekrar tiklamak yonu cevirir; baska sutun her zaman artan baslar. */
@@ -45,7 +49,7 @@ export function CommissionGrid({
   if (loading) {
     return (
       <div className="card">
-        <TableSkeleton rows={6} columns={5} />
+        <TableSkeleton rows={6} columns={COLUMN_COUNT} />
       </div>
     )
   }
@@ -69,7 +73,10 @@ export function CommissionGrid({
   return (
     <div className="card">
       <h2>Dönem özeti ({data.totalElements} personel)</h2>
-      <p className="hint">Satıra tıklayınca o personelin hesap adımları aşağıda açılır.</p>
+      <p className="hint">
+        Detay sütunundaki bağlantı personelin hesaplama adımlarını ayrı bir sayfada açar; satırın
+        herhangi bir yerine tıklamak da aynı sayfaya götürür.
+      </p>
 
       <div className={fetching ? 'table-scroll is-fetching' : 'table-scroll'}>
         <table>
@@ -95,12 +102,13 @@ export function CommissionGrid({
                   </button>
                 </th>
               ))}
+              <th className="col-action">Detay</th>
             </tr>
           </thead>
           <tbody>
             {data.content.length === 0 && (
               <tr>
-                <td colSpan={COLUMNS.length} className="empty">
+                <td colSpan={COLUMN_COUNT} className="empty">
                   Bu sayfada kayıt yok.
                 </td>
               </tr>
@@ -108,8 +116,8 @@ export function CommissionGrid({
             {data.content.map((row) => (
               <tr
                 key={row.employeeNo}
-                className={row.employeeNo === selected ? 'row-selected' : 'row-clickable'}
-                onClick={() => onSelect(row.employeeNo)}
+                className="row-clickable"
+                onClick={() => navigate(detailHref(row.employeeNo))}
               >
                 <td>
                   <div className="cell-title">{row.fullName}</div>
@@ -120,6 +128,17 @@ export function CommissionGrid({
                 <td className={amountClass(row.totalSalesBase)}>{formatMoney(row.totalSalesBase)}</td>
                 <td className={`${amountClass(row.totalCommission)} strong`}>
                   {formatMoney(row.totalCommission)}
+                </td>
+                <td className="col-action">
+                  {/* Satir zaten tiklanabilir; baglantiya tiklanirsa iki kez yonlendirilmesin. */}
+                  <Link
+                    to={detailHref(row.employeeNo)}
+                    className="action-link"
+                    onClick={(event) => event.stopPropagation()}
+                    aria-label={`${row.fullName} hesaplama adımları`}
+                  >
+                    Detay →
+                  </Link>
                 </td>
               </tr>
             ))}

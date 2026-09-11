@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { matchPath, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useSession } from '../context/SessionContext'
-import { APP_ROUTES, landingFor, routesFor } from '../navigation'
+import { APP_ROUTES, landingFor, menuFor } from '../navigation'
 import type { EmployeeResponse } from '../types'
 import { ThemeToggle } from './ThemeToggle'
 import { UserMenu } from './UserMenu'
@@ -34,8 +34,11 @@ export function Layout() {
   }, [session.role, navigate])
 
   // Menu ile rota korumasi ayni listeden beslenir; ayrisamazlar.
-  const visible = routesFor(session.role)
-  const current = APP_ROUTES.find((route) => location.pathname.startsWith(route.path))
+  const visible = menuFor(session.role)
+
+  // Baslik icin tam eslesme aranir: startsWith kullanilsaydi /primim/P1001
+  // adresinde baslik liste sayfasinin adini gosterirdi.
+  const current = APP_ROUTES.find((route) => matchPath(route.path, location.pathname))
 
   return (
     <div className="app-shell">

@@ -154,7 +154,7 @@ değer, sadece o aralıkta kayıt yok. Arayüz bu durumda son sayfaya çeker.
 
 ## Ekranlar
 
-İstenen iki ekran var. Sol menü + üst çubuk düzeni; menü ve rota koruması aynı listeden
+İstenen iki ekran var; prim detayı bunlardan birinin alt sayfası. Sol menü + üst çubuk düzeni; menü ve rota koruması aynı listeden
 beslenir (`web/src/navigation.tsx`), yetkisi olmayan rol sayfayı menüde görmez ve URL'den de
 açamaz. Açık/koyu tema desteği var, tercih tarayıcıda saklanır.
 
@@ -162,12 +162,13 @@ açamaz. Açık/koyu tema desteği var, tercih tarayıcıda saklanır.
 |---|---|---|
 | Prim kuralları | Kural listesi; ekleme ve düzenleme modal içinde | Admin yazar, Muhasebe okur |
 | Primim | Dönem primi ve hesabın her adımı | Personel kendini, Admin/Muhasebe herkesi |
+| Personel prim detayı | Tek personelin hesabının her adımı (`/primim/{personelNo}`) | Admin, Muhasebe |
 
 Prim ekranı role göre iki farklı şey gösterir. Personel rolünde doğrudan kendi hesabı açılır.
-Admin ve Muhasebe rolünde önce dönemin personel tablosu gelir: sunucu tarafında sayfalanır ve
-sıralanır, satıra tıklayınca o personelin hesap adımları altta açılır. Sayfa, sıralama, dönem
-ve seçili personel adres çubuğunda tutulur — sayfa yenilendiğinde, geri tuşunda ve paylaşılan
-bağlantıda aynı liste açılır.
+Admin ve Muhasebe rolünde dönemin personel tablosu gelir: sunucu tarafında sayfalanır ve
+sıralanır, satırdaki **Detay** bağlantısı o personelin hesabını kendi sayfasında açar. Dönem,
+sayfa ve sıralama adres çubuğunda tutulur; detay sayfası da bunları taşıdığı için "Dönem
+özetine dön" kullanıcıyı kaldığı listeye geri bırakır.
 
 Prim dışı kalan satışlar da nedeniyle birlikte listelenir; hiçbir kayıt sessizce düşmez.
 
